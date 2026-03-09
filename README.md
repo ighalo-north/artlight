@@ -21,3 +21,11 @@ To-Do by Fri March 13
 -   upload your data (if possible) - done
 
 -   write a `README.md` file for your repository that says briefly what you plan to do and says where the data is/are
+
+To-Do by Tues March 17
+
+-   update your README with thoughts and questions about next steps
+
+-   Start a file called journal.md where you record anything you do that involves looking at patterns in the data (i.e., anything but data cleaning). The journal is also a good place to record plans for how you will proceed with your analysis
+
+    -   (for example, “if the diagnostic plots look OK, we will look at the summary table and use the clarity of the response to phosphorus as our main outcome”. (See Simmons, Nelson, and Simonsohn (2011).)

@@ -5,7 +5,7 @@ final project for bio708: basis of animal attraction to artificial light at nigh
 5 datasets
 
 1.  artificial selection behavioural data `raw_alan_gen25.xlsx`
-2.  egg to adult survival and developmental duration `etoadd_rawData.xlsx`
+2.  egg to adult survival and developmental duration `etoadd_dataflies.xlsx`
 3.  longevity `Longevity_Final.xlsx`
 4.  mate choice `Mate choice FINAL.xlsx`
 5.  circadian rhythm `circadian rhythm data` (subfolder)

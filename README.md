@@ -1,4 +1,4 @@
-# artlight
+# artificial light
 
 final project for bio708: basis of animal attraction to artificial light at night
 

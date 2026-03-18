@@ -11,16 +11,38 @@ This is where we will record anything we do that involves looking at patterns in
 ### Statistical Plans
 
 -   artificial selection behavioural data:
+    -   In part based on Scott, Dworkin, and Dukas (2022; Animal Behaviour) We will analyze generations 1-25 of the artificial selection experiment in a single mixed-effects general linear model, fitted using the lmer function from the R package lme4. We will assess the significance of the fixed effects used Anova from the car pkg
+    -   We will analyze the effect of relaxed selection by fitting a model of lightscores from generation 25, which was the last generation with artificial selection, and generation 35. The model was fitted and fixed effects tested in the same form as described above for the Generation 1–25 model
     -   response variable: lightscore
+        -   other response variable of (some) interest: prop_out (the proportion of flies that completed each assay)
 -   egg to adult survival and developmental duration:
-    -   response variable: day/time of eclosion
+    -   response variable: did fly eclose (binary) + day/time of eclosion
+    -   vial nested within lineage, lineage nested within treatment
+    -   fixed effects: sex,
+    -   random:
 -   longevity:
-    -   4 males 4 females in each of 20 vials per lineage
+    -   4 males and 4 females in each of 20 vials per lineage
         -   note: only 1 in 4 single sex flies died at all in any vial except S1 6, where 2 females died
     -   Vial ID will be treated as a random effect in the statistical model
+    -   response variable: did fly survive the week (binary) + day/time of death
 -   mate choice:
-    -   response variables: choice and mating latency
-    -   compare proportion of males mated using GLMM with a binomial distribution;with treatment as a fixed factor and lineage pair as random factor (Scott et al., 2022).
+    -   data layout \*NEW\*
+
+        -   condition: random male vs C male, random male vs S male
+        -   80 individuals per lineage, this sheet only records vials where mating occurs
+        -   if mating did not happen w either male, row is gone (all lines have 80 or less individual rows)
+        -   should be 640 rows once data are generated
+
+    -   response variables: choice
+
+        -   we are ignoring mating latency
+
+    -   this_male_colour is a nuisance variable
+
+    -   compare proportion of males mated using GLMM with a binomial distribution; with treatment as a fixed factor and lineage pair as random factor (Scott et al., 2022).
+
+    -   random effects: arena, day
+
     -   Caveats. Note that day for the selection lineages is from 9 PM to 9 AM, and that day for the wild flies is from 10 AM to midnight. We have decided not to alter this mismatch. If we find a difference in mating success, we may do a follow up test during the selection lineages’ morning.
 -   circadian rhythm:
     -   response variable: activity (baseline evolved activity between populations)

@@ -25,6 +25,7 @@ This is where we will record anything we do that involves looking at patterns in
         -   note: only 1 in 4 single sex flies died at all in any vial except S1 6, where 2 females died
     -   Vial ID will be treated as a random effect in the statistical model
     -   response variable: did fly survive the week (binary) + day/time of death
+    -   
 -   mate choice:
     -   data layout \*NEW\*
 

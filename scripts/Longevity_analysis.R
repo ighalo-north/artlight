@@ -15,7 +15,6 @@ longev_data <- (read_excel("data/Longevity_Final.xlsx")
 )
 summary(longev_data)
 longev_data$status <- ifelse(longev_data$fly_lifespan == "8",0,1)
-  
 
 ?Surv
 Surv(longev_data$fly_lifespan, event=longev_data$status) # Model, probably not properly done!

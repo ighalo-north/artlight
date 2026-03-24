@@ -28,7 +28,7 @@ This is where we will record anything we do that involves looking at patterns in
 -   mate choice:
     -   data layout \*NEW\*
 
-        -   condition: random male vs C male, random male vs S male
+        -   condition: stimulus male vs C male, stimulus male vs S male
         -   80 individuals per lineage, this sheet only records vials where mating occurs
         -   if mating did not happen w either male, row is gone (all lines have 80 or less individual rows)
         -   should be 640 rows once data are generated

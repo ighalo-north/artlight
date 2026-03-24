@@ -20,12 +20,13 @@ This is where we will record anything we do that involves looking at patterns in
     -   vial nested within lineage, lineage nested within treatment
     -   fixed effects: sex,
     -   random:
+    -   Will fit using a cox mixed effects regression, which should nicely incorporate both response variables
 -   longevity:
     -   4 males and 4 females in each of 20 vials per lineage
         -   note: only 1 in 4 single sex flies died at all in any vial except S1 6, where 2 females died
     -   Vial ID will be treated as a random effect in the statistical model
     -   response variable: did fly survive the week (binary) + day/time of death
-    -   Will fit a cox mixed effects regression
+    -   Will fit a cox mixed effects regression, since it is frequently used for survival data similar to ours
 -   mate choice:
     -   data layout \*NEW\*
 

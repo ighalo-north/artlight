@@ -17,8 +17,8 @@ summary(longev_data)
 longev_data$status <- ifelse(longev_data$fly_lifespan == "8",0,1)
 
 ?Surv
-Surv(longev_data$fly_lifespan, event=longev_data$status) # Model, probably not properly done!
-m1 <- coxme(Surv(fly_lifespan, event=status) ~ treatment + (1|treatment/lineage) + (1|vial), data=longev_data)
+Surv(longev_data$fly_lifespan, event=longev_data$status) # Tentative model, probably not properly done!
+m1 <- coxme(Surv(fly_lifespan, event=status) ~ treatment + (1|treatment/lineage) + (1|vial), data=longev_data) 
 summary(m1)
 Anova(m1)
 

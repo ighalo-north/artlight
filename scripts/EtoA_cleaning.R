@@ -36,5 +36,5 @@ etoa_data <- (rbind(etoa_eclosed,etoa_not_ecl) #add data for eclosed and uneclos
 summary(etoa_data)
 str(etoa_data)
 
-saveRDS(etoa_data,"etoa_data_clean.rds")
+saveRDS(etoa_data,"data/etoa_data_clean.rds")
 

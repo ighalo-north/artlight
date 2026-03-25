@@ -26,10 +26,11 @@ This is where we will record anything we do that involves looking at patterns in
     -   Vial ID will be treated as a random effect in the statistical model
     -   response variable: did fly survive the week (binary) + day/time of death
 -   mate choice:
-    -   data layout \*NEW\*
+    -   data layout \*NEWER\*
 
-        -   condition: random male vs C male, random male vs S male
+        -   condition: C male vs S male in each vial (each row)
         -   80 individuals per lineage, this sheet only records vials where mating occurs
+            -   S male mated: 1 - selection male mated, 0 - control male mated
         -   if mating did not happen w either male, row is gone (all lines have 80 or less individual rows)
         -   should be 640 rows once data are generated
 

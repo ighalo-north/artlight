@@ -12,6 +12,16 @@ We have 2 independent monitors, each connected to their own
 We will only analyze 24 hours of data for each trial (9pm to 9pm) 
   the 13 hours beforehand allows the flies to acclimate to the environment.
 '
+
+'
+ggetho() is the core function. It expresses the relationship between variables. In this respect, it works very much like ggplot(), but it also pre-processes the data.
+
+ggetho() is only a layer on top of ggplot(). It works exclusively with 
+  behavr tables and does preprocess data  before calling ggplot(). 
+
+ggetho() does return ggplot a object, therefore, 
+  layers available in ggplot2 can be used natively on top of ggetho
+'
 #DAM: Drosophila Activity Monitor
 library(damr) #main pkg
 library(sleepr) #identifies when an animal is asleep or not (tied to behavr pkg)
@@ -46,41 +56,75 @@ metadata$treatment <- as.factor(metadata$treatment)
 metadata$TrtLin <- as.factor(metadata$TrtLin)
 metadata$sex <- as.factor(metadata$sex)
 #metadata$region_id <- as.factor(metadata$region_id) #scared to mess with the built in variables
-'
-#good practice do not include (or even look at) vials whose fly died or escaped
-dt <- load_dam(metadata[status==OK])
-summary(dt) 
-'
 
-library(ggetho) #for graphing this activity stuff
-
-library(sleepr)
 #identifies when an animal is asleep or not (tied to behavr pkg)
 #time_window_length default is 300 (unit is seconds, 5 minutes); #of seconds to be used by the motion classifier. This corresponds to the sampling period of the output data.
 #time_window_length = #reset to
 #min_time_immobile Minimal duration (in seconds) of a sleep bout. Immobility = to this value are considered as sleep.
 #min_time_immobile = #reset to
-dt <- load_dam(metadata) #load only good data
 
-dt <- load_dam(metadata[status=="OK"], FUN = sleepr::sleep_dam_annotation) #load only good data
-summary(dt) 
+dtallflies <- load_dam(metadata) #load only good data
+
+#good practice do not include (or even look at) vials whose fly died or escaped
+#but i might also just include them until death
+dtok <- load_dam(metadata[status=="OK"], FUN = sleepr::sleep_dam_annotation) #load only good data
+dt <- load_dam(metadata[status!="none"], FUN = sleepr::sleep_dam_annotation) #load only good data
+summary(dt)
 
 
-'
-ggetho() is the core function. It expresses the relationship between variables. In this respect, it works very much like ggplot(), but it also pre-processes the data.
+dt_curated <- curate_dead_animals(dt) #remove data of dead animals after they died (done by a movement threshold or smthg)
+dt[, moving := activity > 0] #new col for moving (true false) if they are crossing da beams
+dt_curated[, uniqueid := .I]
+dt_curated[, sleep_fraction := mean(asleep), by = id]
 
-It is important to understand the difference between ggplot() and ggetho(). 
+#DO NOT CHANGE THE ABOVE----- it's working finally!!!
 
-ggplot() works with data frames (or data tables), 
-  and does not preprocess the data. 
+#graph sleep----
+sleep_dt <- dt_curated[, .(sleep_fraction = mean(asleep)), by = id]
+sleep_dt <- dt_curated[sleep_dt, meta = TRUE]
 
-ggetho() is only a layer on top of ggplot(). It works exclusively with 
-  behavr tables and does preprocess data  before calling ggplot(). 
+ggplot(sleep_dt, aes(x = treatment, y = sleep_fraction)) +
+  stat_summary(
+    fun = mean, 
+    geom = "point", 
+    color = "red", 
+    size = 3
+  ) +
+  stat_summary(
+    fun.data = mean_cl_normal,  # mean ± 95% CI
+    geom = "errorbar", 
+    width = 0.2,
+    color = "red"
+  ) +
+  theme_minimal() +
+  labs(
+    x = "Treatment",
+    y = "Sleep Fraction",
+    title = "Sleep Fraction by Treatment"
+  )
+ggplot(sleep_dt, aes(x = treatment, y = sleep_fraction)) +
+  # raw data points, jittered slightly for visibility
+  geom_jitter(width = 0.1, alpha = 0.3, color = "gray40", size = 1.5) +
+  
+  # mean point
+  stat_summary(fun = mean, geom = "point", color = "#D55E00", size = 4) +
+  
+  # 95% CI error bars
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = 0.15, color = "#D55E00", size = 1) +
+  
+  theme_minimal(base_size = 14) +
+  labs(
+    x = "Treatment",
+    y = "Sleep Fraction",
+    title = "Sleep Fraction by Treatment"
+  ) +
+  theme(
+    axis.title = element_text(face = "bold"),
+    axis.text = element_text(color = "black")
+  )
 
-ggetho() does return ggplot a object, therefore, 
-  layers available in ggplot2 can be used natively on top of ggetho
-'
 
+#graph other shit----
 #shows one replicate at a time
 ggetho(dt[xmv(TrtLin) == 'C3'], aes(z=activity)) +
   stat_tile_etho() + #showsthe response var in the (colour) z axis

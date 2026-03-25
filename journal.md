@@ -28,9 +28,9 @@ This is where we will record anything we do that involves looking at patterns in
     -   response variable: did fly survive the week (binary) + day/time of death
     -   Will fit a cox mixed effects regression, since it is frequently used for survival data similar to ours
 -   mate choice:
-    -   data layout \*NEW\*
-
-        -   condition: stimulus male vs C male, stimulus male vs S male
+    -   data layout \*NEWER\*
+        -   condition: in each vial is 1 Ctrl male and 1 Sel male
+        -       - selection male mated: 1 - selection male mated, 0 - control male mated
         -   80 individuals per lineage, this sheet only records vials where mating occurs
         -   if mating did not happen w either male, row is gone (all lines have 80 or less individual rows)
         -   should be 640 rows once data are generated

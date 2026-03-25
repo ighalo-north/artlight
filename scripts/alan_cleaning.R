@@ -24,7 +24,7 @@ alan$blind <- ifelse(alan$Generation <= 10, "no", alan$blind)
 
 #use tidyverse to change some char variables to factors
 (alan <- alan
-  |> mutate(across(c(Maze, Sex, Treatment, Maze_Order, blind, time_of_day, Light_Side), as.factor)))
+  |> mutate(across(c(Maze, Lineagae, Sex, Treatment, Maze_Order, blind, time_of_day, Light_Side), as.factor)))
 #order of the levels doesn't matter in my experiment, no reason to reorder
 
 #lineage should be nested within treatment for all analyses
@@ -71,6 +71,11 @@ stopifnot(all(check$n <= 4))
 #fill light side column based on maze column
 alan$Light_Side <- ifelse(alan$Maze %in% c("A", "C"), "L", "R")
 
+#use tidyverse to change remaining char variables to factors
+(alan <- alan
+  |> mutate(across(c(Light_Side, day), as.factor)))
+
+
 #plot as sanity check output
 gg0 <-  
   ggplot(alan_sum, aes(x=Generation, y=Lightscore_mean,
@@ -92,7 +97,7 @@ alan_sum2 <- mutate(alan_sum, grp = substr(TrtLin, 1, 1))
 gg0 + alan_sum2 + facet_wrap(~grp,  nrow = 1)
 
 #Use the saveRDS function in R to save a clean (or clean-ish) version of your data
-saveRDS(alan, "clean_alan_gen25.rds")
+saveRDS(alan, "../data/clean_alan_gen25.rds")
 
 
 

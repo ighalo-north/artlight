@@ -1,5 +1,6 @@
 library(readxl)
 library(tidyr)
+library(dplyr)
 
 wide_etoa <- read_excel("data/EtoA_data.xlsx", range = 'A1:AE81') 
 

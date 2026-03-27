@@ -31,13 +31,20 @@ This is where we will record anything we do that involves looking at patterns in
     - Model would look something like:
           lightscore ~ Generation*Sex*Treatment + Time of Day + (Generation|Day) + (1|Maze_position) + (Treatment|lineage) + (1|Maze ID)
 
--   egg to adult survival and developmental duration:
+-   **egg to adult survival and developmental duration**:
+    -  Planning:
     -   response variable: did fly eclose (binary) + day/time of eclosion
     -   vial nested within lineage, lineage nested within treatment
     -   fixed effects: sex,
     -   random:
     -   Will fit using a cox mixed effects regression, which should nicely incorporate both response variables
--   longevity:
+    
+    - Response Variables: eclosed + time
+    - Fixed effects: treatment, sex
+    - Random effects: lineage (nested within treatment), vial (nested within lineage)
+          - Might look like: (lineage|treatment/vial)
+    
+-   **longevity**:
     -   4 males and 4 females in each of 20 vials per lineage
         -   note: only 1 in 4 single sex flies died at all in any vial except S1 6, where 2 females died
     -   Vial ID will be treated as a random effect in the statistical model
@@ -47,6 +54,8 @@ This is where we will record anything we do that involves looking at patterns in
     -   Fixed Effects: Treatment, Sex (+ interaction)
     -   Random Effects: Lineage (nested within treatment, Vial (nested within lineage))
     -   Like this? (Treatment|Lineage/Vial)
+ 
+    
 -   **mate choice**:
     -   data layout \*NEWER\*
         -   condition: in each vial is 1 Ctrl male and 1 Sel male
@@ -71,8 +80,9 @@ This is where we will record anything we do that involves looking at patterns in
   - Response Variable: Mate success
   - Fixed Effects: treatment
   - Random effects: lineage pair, day/arena
- 
--   circadian rhythm:
+
+    
+-   **circadian rhythm**:
     -   response variable: activity (baseline evolved activity between populations)
     -   Each comparison of activity between populations will be run through linear mixed models (“lme4 ” package) Fixed effects: treatment, sex Random effects: monitor (1 vs 2) lineage, day
     -   To account for the effects of circadian rhythm on activity, either impose a circadian periodicity (sin(pihour/12) + cos(pihour/12)) or fit a natural smooth cubic spline with 5 knots (ns(hour, 5)) for hours. we will start by looking at 1 h totals (counts per hour)

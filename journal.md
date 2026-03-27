@@ -43,7 +43,11 @@ This is where we will record anything we do that involves looking at patterns in
     -   Vial ID will be treated as a random effect in the statistical model
     -   response variable: did fly survive the week (binary) + day/time of death
     -   Will fit a cox mixed effects regression, since it is frequently used for survival data similar to ours
--   mate choice:
+    -   Response Variables: FlyLifespan & Status 
+    -   Fixed Effects: Treatment, Sex (+ interaction)
+    -   Random Effects: Lineage (nested within treatment, Vial (nested within lineage))
+    -   Like this? (Treatment|Lineage/Vial)
+-   **mate choice**:
     -   data layout \*NEWER\*
         -   condition: in each vial is 1 Ctrl male and 1 Sel male
         -       - selection male mated: 1 - selection male mated, 0 - control male mated
@@ -63,6 +67,11 @@ This is where we will record anything we do that involves looking at patterns in
     -   random effects: arena, day
 
     -   Caveats. Note that day for the selection lineages is from 9 PM to 9 AM, and that day for the wild flies is from 10 AM to midnight. We have decided not to alter this mismatch. If we find a difference in mating success, we may do a follow up test during the selection lineages’ morning.
+
+  - Response Variable: Mate success
+  - Fixed Effects: treatment
+  - Random effects: lineage pair, day/arena
+ 
 -   circadian rhythm:
     -   response variable: activity (baseline evolved activity between populations)
     -   Each comparison of activity between populations will be run through linear mixed models (“lme4 ” package) Fixed effects: treatment, sex Random effects: monitor (1 vs 2) lineage, day

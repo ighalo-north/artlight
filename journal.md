@@ -15,6 +15,22 @@ This is where we will record anything we do that involves looking at patterns in
     -   We will analyze the effect of relaxed selection by fitting a model of lightscores from generation 25, which was the last generation with artificial selection, and generation 35. The model was fitted and fixed effects tested in the same form as described above for the Generation 1–25 model
     -   response variable: lightscore
         -   other response variable of (some) interest: prop_out (the proportion of flies that completed each assay)
+- **Fixed Effects**
+    - Generation
+    - Sex
+    - Treatment
+    - Interested in all interactions between the three variables.
+    - Time of day
+- **Random Effects**
+    - Day (Generation|Day)
+    - Maze Position
+    - Lineage -> (Treatment|Lineage)
+    - Maze ID
+    - Light side (nested in Maze ID) -> (Maze|Light Side) ?? Do we need to include this? Should be a fixed effect because it has two levels?
+ 
+    - Model would look something like:
+          lightscore ~ Generation*Sex*Treatment + Time of Day + (Generation|Day) + (1|Maze_position) + (Treatment|lineage) + (1|Maze ID)
+
 -   egg to adult survival and developmental duration:
     -   response variable: did fly eclose (binary) + day/time of eclosion
     -   vial nested within lineage, lineage nested within treatment

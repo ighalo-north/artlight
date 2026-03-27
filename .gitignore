@@ -36,3 +36,4 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 etoa_data_clean.rds
+journal.md

@@ -24,7 +24,7 @@ alan$blind <- ifelse(alan$Generation <= 10, "no", alan$blind)
 
 #use tidyverse to change some char variables to factors
 (alan <- alan
-  |> mutate(across(c(Maze, Lineagae, Sex, Treatment, Maze_Order, blind, time_of_day, Light_Side), as.factor)))
+  |> mutate(across(c(Maze, Lineage, Sex, Treatment, Maze_Order, blind, time_of_day, Light_Side), as.factor)))
 #order of the levels doesn't matter in my experiment, no reason to reorder
 
 #lineage should be nested within treatment for all analyses
@@ -82,9 +82,9 @@ gg0 <-
                        colour=TrtLin, group=TrtLin)) +
   geom_point()+
   geom_smooth(method="lm", formula = 'y~x', se=TRUE)+
-  scale_x_continuous(limits = c(1, generations_total), breaks = 1:24)+
+  scale_x_continuous(limits = c(1, generations_total), breaks = 1:generations_total)+
   scale_y_continuous(limits = c(1, 16), breaks = 1:16)+
-  labs(title="selection lineages' lightscore over generation", y="lightscore",
+  labs(title="Lineages' lightscore over generation", y="lightscore",
        x="generation")+
   theme_bw()
 

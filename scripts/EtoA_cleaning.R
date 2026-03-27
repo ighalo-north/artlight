@@ -2,7 +2,7 @@ library(readxl)
 library(tidyr)
 library(dplyr)
 
-wide_etoa <- read_excel("data/EtoA_data.xlsx", range = 'A1:AE81') 
+wide_etoa <- read_excel("../data/EtoA_data.xlsx", range = 'A1:AE81') 
 
 long_etoa <- (wide_etoa |> 
                 pivot_longer(cols = 7:31, names_to = 'time', values_to = "count" ) |> 

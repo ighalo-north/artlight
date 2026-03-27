@@ -15,22 +15,24 @@ This is where we will record anything we do that involves looking at patterns in
     -   We will analyze the effect of relaxed selection by fitting a model of lightscores from generation 25, which was the last generation with artificial selection, and generation 35. The model was fitted and fixed effects tested in the same form as described above for the Generation 1–25 model
     -   response variable: lightscore
         -   other response variable of (some) interest: prop_out (the proportion of flies that completed each assay)
-- **Fixed Effects**
-    - Generation
-    - Sex
-    - Treatment
-    - Interested in all interactions between the three variables.
-    - Time of day
-- **Random Effects**
-    - Day (Generation|Day)
-    - Maze Position
-    - Lineage -> (Treatment|Lineage)
-    - Maze ID
-    - Light side (nested in Maze ID) -> (Maze|Light Side) ?? Do we need to include this? Should be a fixed effect because it has two levels?
- 
-    - Model would look something like:
-          lightscore ~ Generation*Sex*Treatment + Time of Day + (Generation|Day) + (1|Maze_position) + (Treatment|lineage) + (1|Maze ID)
+-   **Fixed Effects**
+    -   Generation
+    -   Sex
+    -   Treatment
+    -   Interested in all interactions between the three variables.
+    -   Time of day
+-   **Random Effects**
+    -   Day (Generation\|Day)
 
+    -   Maze Position
+
+    -   Lineage -\> (Treatment\|Lineage)
+
+    -   Maze ID
+
+    -   Light side (nested in Maze ID) -\> (Maze\|Light Side) ?? Do we need to include this? Should be a fixed effect because it has two levels?
+
+    -   Model would look something like: lightscore \~ Generation*Sex*Treatment + Time of Day + (Generation\|Day) + (1\|Maze_position) + (Treatment\|lineage) + (1\|Maze ID)
 -   egg to adult survival and developmental duration:
     -   response variable: did fly eclose (binary) + day/time of eclosion
     -   vial nested within lineage, lineage nested within treatment
@@ -45,11 +47,21 @@ This is where we will record anything we do that involves looking at patterns in
     -   Will fit a cox mixed effects regression, since it is frequently used for survival data similar to ours
 -   mate choice:
     -   data layout \*NEWER\*
+
         -   condition: in each vial is 1 Ctrl male and 1 Sel male
-        -       - selection male mated: 1 - selection male mated, 0 - control male mated
+
+        -   
+
+            ```         
+              - selection male mated: 1 - selection male mated, 0 - control male mated
+            ```
+
         -   80 individuals per lineage, this sheet only records vials where mating occurs
+
             -   S male mated: 1 - selection male mated, 0 - control male mated
+
         -   if mating did not happen w either male, row is gone (all lines have 80 or less individual rows)
+
         -   should be 640 rows once data are generated
 
     -   response variables: choice

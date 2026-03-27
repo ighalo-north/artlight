@@ -75,6 +75,31 @@ alan$Light_Side <- ifelse(alan$Maze %in% c("A", "C"), "L", "R")
 (alan <- alan
   |> mutate(across(c(Light_Side, day), as.factor)))
 
+#change Maze_Order to a position for each maze
+
+
+
+'
+if ABCD and A: 1
+if ABCD and B: 2
+if ABCD and C: 3
+if ABCD and D: 4
+
+if CDAB A 3
+B 4
+C 1
+D 2
+
+DBCA A 4
+B 2
+C 3
+D 1
+
+'
+
+
+
+
 
 #plot as sanity check output
 gg0 <-  

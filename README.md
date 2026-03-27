@@ -11,8 +11,6 @@ final project for bio708: basis of animal attraction to artificial light at nigh
 4.  mate choice `Mate choice FINAL.xlsx`
 5.  circadian rhythm `circadian rhythm data` (folder w files for each monitor)
 
-JD: Is it possible to de-nest this folder? Right now you have circadianrhythmdata/circadianrhythmdata/…
-
 Next Steps:
 
 -   import and tidy the data

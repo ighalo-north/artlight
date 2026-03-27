@@ -9,8 +9,8 @@ options(contrasts=c("contr.sum", "contr.poly"))
 alan <- readRDS("../data/clean_alan_gen25.rds")
 
 #small model----
-linalanbasic <- lm(Lightscore~TrtLin + Generation, data=alan)
 linalan_null <- lm(Lightscore ~ 1, data = alan) #null hypothesis
+linalanbasic <- lm(Lightscore~TrtLin + Generation, data=alan)
 
 #draw diagnostic
 performance::check_model(linalanbasic)
@@ -39,6 +39,8 @@ linalan <- update(linalan, .~. +blind)
 linalan <- update(linalan, .~. + Light_Side)
 
 linalan <- update(linalan, .~. + flies_in)
+
+linalan <- (Lightscore !)
 
 
 #compare the fit of each model to my data

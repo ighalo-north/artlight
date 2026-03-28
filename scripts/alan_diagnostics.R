@@ -8,16 +8,6 @@ library(MASS)
 library(car)
 library(lme4)
 
-'
-binomial(link = "logit")
-gaussian(link = "identity")
-Gamma(link = "inverse")
-inverse.gaussian(link = "1/mu^2")
-poisson(link = "log")
-quasi(link = "identity", variance = "constant")
-quasibinomial(link = "logit")
-quasipoisson(link = "log")
-'
 
 options(contrasts=c("contr.sum", "contr.poly"))
 
@@ -27,10 +17,11 @@ alan <- readRDS("../data/clean_alan_gen25.rds")
 linalan_null <- lm(Lightscore ~ 1, data = alan) #null hypothesis
 linalanbasic <- lm(Lightscore~TrtLin + Generation, data=alan)
 
-#draw diagnostic
+#draw diagnostic for simple linear models
 performance::check_model(linalanbasic)
 performance::check_model(linalan_null)
 
+#compare the two simple linear models
 anova(linalanbasic, linalan_null)
 
 
@@ -55,14 +46,29 @@ linalan <- update(linalan, .~. + Light_Side)
 
 linalan <- update(linalan, .~. + flies_in)
 
-linalan <- lmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (Generation\|day) + (1\|Maze_position) + (Treatment\|Lineage) + (1\|Maze),
+#vs a linear mixed model (the proper way to analyze this data)
+lmeralan <- lmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (Generation|day) + (1|maze_position) + (Treatment|Lineage) + (1|Maze),
                data = alan)
-
 
 #compare the fit of each model to my data
 drop1(linalan, test="F")
+drop1(lmeralan, test="none") #test=Chisq? or user?
 
-#draw diagnostic
+
+#draw diagnostic for linear model
+performance::check_model(linalan)
+
+#draw diagnostic for linear mixed model
+#https://cran.r-project.org/web/packages/DHARMa/vignettes/DHARMa.html
+testDispersion(lmeralan)
+simulationOutput <- simulateResiduals(fittedModel = lmeralan, plot = F)
+residuals(simulationOutput)
+residuals(simulationOutput, quantileFunction = qnorm, outlierValues = c(-7,7))
+plot(simulationOutput)
+
+#high collinearity between TrtLin and day, so we removed TrtLin from the model
+linalan <- update(linalan,~. -TrtLin)
 performance::check_model(linalan)
 
 anova(linalanbasic, linalan_null, linalan)
+anova(lmeralan)

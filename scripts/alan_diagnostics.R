@@ -2,7 +2,22 @@ library(ggplot2)
 library(magrittr)
 library(tidyverse)
 library(emmeans)
+library(DHARMa)
+library(emmeans)
+library(MASS)
+library(car)
+library(lme4)
 
+'
+binomial(link = "logit")
+gaussian(link = "identity")
+Gamma(link = "inverse")
+inverse.gaussian(link = "1/mu^2")
+poisson(link = "log")
+quasi(link = "identity", variance = "constant")
+quasibinomial(link = "logit")
+quasipoisson(link = "log")
+'
 
 options(contrasts=c("contr.sum", "contr.poly"))
 
@@ -40,7 +55,8 @@ linalan <- update(linalan, .~. + Light_Side)
 
 linalan <- update(linalan, .~. + flies_in)
 
-linalan <- (Lightscore !)
+linalan <- lmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (Generation\|day) + (1\|Maze_position) + (Treatment\|Lineage) + (1\|Maze),
+               data = alan)
 
 
 #compare the fit of each model to my data

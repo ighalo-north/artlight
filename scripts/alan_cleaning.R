@@ -78,7 +78,24 @@ alan$Light_Side <- ifelse(alan$Maze %in% c("A", "C"), "L", "R")
 #change Maze_Order to a position for each maze
 
 
-
+alan <- alan %>%
+  mutate(
+    maze_position = case_when(
+      Maze == "A" & Maze_Order == "ABCD" ~ 1,
+      Maze == "B" & Maze_Order == "ABCD" ~ 2,
+      Maze == "C" & Maze_Order == "ABCD" ~ 3,
+      Maze == "D" & Maze_Order == "ABCD" ~ 4,
+      Maze == "A" & Maze_Order == "CDAB" ~ 3,
+      Maze == "B" & Maze_Order == "CDAB" ~ 4,
+      Maze == "C" & Maze_Order == "CDAB" ~ 1,
+      Maze == "D" & Maze_Order == "CDAB" ~ 2,
+      Maze == "A" & Maze_Order == "DBCA" ~ 4,
+      Maze == "B" & Maze_Order == "DBCA" ~ 2,
+      Maze == "C" & Maze_Order == "DBCA" ~ 3,
+      Maze == "D" & Maze_Order == "DBCA" ~ 1,
+      TRUE ~ NA
+    )
+  )
 '
 if ABCD and A: 1
 if ABCD and B: 2

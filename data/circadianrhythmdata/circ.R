@@ -28,9 +28,12 @@ library(sleepr) #identifies when an animal is asleep or not (tied to behavr pkg)
 library(lubridate) #fix date format for damr
 library(ggetho) #graphing activity
 library(readr)
+library(tidyverse)
+library(dplyr)
+library(stringr)
 
 setwd(getwd())
-metadata <- fread("metadata.csv")
+metadata <- fread("metadata_alltimes.csv")
 metadata
 
 #reformat start and end time into the format damr wants (it's soooo picky)
@@ -71,11 +74,14 @@ dtok <- load_dam(metadata[status=="OK"], FUN = sleepr::sleep_dam_annotation) #lo
 dt <- load_dam(metadata[status!="none"], FUN = sleepr::sleep_dam_annotation) #load only good data
 summary(dt)
 
-
 dt_curated <- curate_dead_animals(dt) #remove data of dead animals after they died (done by a movement threshold or smthg)
 dt[, moving := activity > 0] #new col for moving (true false) if they are crossing da beams
 dt_curated[, uniqueid := .I]
 dt_curated[, sleep_fraction := mean(asleep), by = id]
+
+
+dt_curated <- dt_curated %>%
+  mutate(monitor = as.integer(str_extract(id, "(?<=Monitor)\\d+")))
 
 #DO NOT CHANGE THE ABOVE----- it's working finally!!!
 
@@ -124,7 +130,7 @@ ggplot(sleep_dt, aes(x = treatment, y = sleep_fraction)) +
   )
 
 
-#graph other shit----
+#graph other stuff----
 #shows one replicate at a time
 ggetho(dt[xmv(TrtLin) == 'C3'], aes(z=activity)) +
   stat_tile_etho() + #showsthe response var in the (colour) z axis
@@ -139,28 +145,22 @@ bar_plot <- ggetho(dt[xmv(TrtLin) == 'C1'], aes(x=t, z=moving)) + stat_bar_tile_
 bar_plot
 
 #todo: add light/dark cycle in background, rename id
+#todo: metadata_alltimes to trim, and then set zeitburger time UGH
 
-
-#show all
+#show all, pretty graph
 allplot <- ggetho(dt, aes(x=t, y=TrtLin, z=moving)) + stat_bar_tile_etho()
 allplot
 
 
 #compute overall average fraction of time spent moving
-# the average time spent moving per 1000 (rounded)
-mean_mov_dt - dt[, .(mean_moving = round(mean(moving)  1000)), by=id]
-# join curent meta and the summary table
-new_meta - dt[mean_mov_dt, meta=T]
-# set new metadata
+#the average time spent moving per 1000 (rounded)
+mean_mov_dt <- dt[, .(mean_moving = round(mean(moving), 1000)), by=id]
+#join curent meta and the summary table
+new_meta <- dt[mean_mov_dt, meta=T]
+#set new metadata
 setmeta(dt, new_meta)
 head(dt[meta=T])
 
-pl - ggetho(dt, aes(x=t, y=interaction(id, mean_moving, sex, sep =   ), z=moving)) +
-  stat_tile_etho()
-pl
-pl - ggetho(dt, aes(x=t, y=sex, z=moving)) + stat_tile_etho()
-pl
-pl - ggetho(dt, aes(x=t, y=sex, z=moving)) + stat_tile_etho()
 
 
 '
@@ -172,24 +172,22 @@ Instead, if we use a grouping variable like sex,
   we will plot one row per value of sex (i.e. two rows, one for males, 
     one for females). In other words, we replace id by sex on the y axis
 '
-pl - ggetho(dt, aes(x=t, y=TrtLin, z=moving)) + stat_tile_etho()
-pl
-
-pl - ggetho(dt, aes(x=t, y=TrtLin, z=moving)) + stat_bar_tile_etho()
+pl <- ggetho(dt, aes(x=t, y=TrtLin, z=moving)) + stat_bar_tile_etho()
 pl #shows our z variable by the height of the tiles
 
+#PRETTY
 #multiple groups (population) on same graph
-pl - ggetho(dt, aes(x=t, y=moving, colour = treatment)) + stat_pop_etho()
+pl <- ggetho(dt, aes(x=t, y=moving, colour = treatment)) + stat_pop_etho()
 pl
-pl - ggetho(dt, aes(x=t, y=moving)) + stat_pop_etho() +
+pl <- ggetho(dt, aes(x=t, y=moving)) + stat_pop_etho() +
   facet_grid(sex ~ .)
 pl
-pl - ggetho(dt, aes(x=t, y=moving)) + stat_pop_etho() +
+pl <- ggetho(dt, aes(x=t, y=moving)) + stat_pop_etho() +
   facet_grid(treatment ~ .)
 pl
 
 
-pl - ggetho(dt, aes(x=t, y=moving, colour = sex)) +
+pl <- ggetho(dt, aes(x=t, y=moving, colour = sex)) +
   stat_pop_etho() +
   facet_grid(treatment ~ .)
 pl
@@ -202,14 +200,20 @@ consecutive days. In ggetho, we call that time wrapping.
 It can be done simply with the time_wrap argument. 
 It will work the same for population or tile plots
 '
-pl - ggetho(dt, aes(x=t, y=moving), time_wrap = hours(24)) + stat_pop_etho()
+pl <- ggetho(dt, aes(x=t, y=moving), time_wrap = hours(24)) + stat_pop_etho()
 pl
 
 '
-If you are interested in events that happen between the end and the start of the wrapping period (e.g. at ZT24). You may want to wrap time with an “offset”. That is a phase shift. For instance, if we want to have ZT06 in the middle of our graph, we use an offset of +6h
+If you are interested in events that happen between the 
+  end and the start 
+  of the wrapping period (e.g. at ZT24). 
+You may want to wrap time with an “offset”. 
+That is a phase shift. For instance, if we want to 
+  have ZT06 in the middle of our graph, we use an 
+  offset of +6h
  ' 
 
-pl - ggetho(dt, aes(x=t, y=moving), 
+pl <- ggetho(dt, aes(x=t, y=moving), 
             time_wrap = hours(24),
             time_offset = hours(9)) + stat_pop_etho()
 pl
@@ -219,57 +223,50 @@ In circadian experiments, we often like to add annotations
   (black and white boxes) to show Dark and Light phases.
   We have another layer for that
 
-
 To put the annotation in the background, 
   we can invert the order of the layers, 
   set the height of the annotation to 1 (100%) and 
   add some transparency (alpha = 0.3). 
 We also remove the outline of the boxes
-
-
-
 '
-pl - ggetho(dt, aes(x=t, y=moving)) + stat_pop_etho() + 
+pl <- ggetho(dt, aes(x=t, y=moving)) + stat_pop_etho() + 
   stat_ld_annotations()
 pl
 
-pl - ggetho(dt, aes(x=t, y=moving)) +
+pl <- ggetho(dt, aes(x=t, y=moving)) +
   stat_ld_annotations(height=1, alpha=0.3, outline = NA, period = 1260) +
   stat_pop_etho()
 pl
 
 
-
-
+activity_dt <- dt[,
+              .(mean_acti = mean(activity),
+                max_acti = max(activity)
+              ),
+              by='id']
+activity_dt
 #spent sleeping
-summary_dt - 
-  rejoin(dt[,
-            .(
-              # this is where the computation happens
-              sleep_fraction = mean(asleep)
-            ),
-            by=id])
-summary_dt
-ggplot(summary_dt, aes(x=sex, y=sleep_fraction, fill=sex)) + 
-  geom_boxplot(outlier.colour = NA) +
-  geom_jitter(alpha=.5) +
-  facet_grid(TrtLin ~ .) +
-  scale_y_continuous(name= Fraction of time sleeping,labels = scalespercent)
-
 
 #light phase info
-dt[, phase = ifelse(t %% (24  3600)  (12  3600), D, L)]
+dt[, phase = ifelse(t %% (24/3600) - (12/3600), D, L)]
 
-summary_dt - 
+summary_dt <- 
   rejoin(dt[,
             .(
-              # this is where the computation happens
+              #this is where the computation happens
+              sleep_fraction = mean(asleep),
               sleep_fraction_all = mean(asleep),
               sleep_fraction_l = mean(asleep[phase == L]),
               sleep_fraction_d = mean(asleep[phase == D])
             ),
             ,by=id])
 summary_dt
+
+ggplot(summary_dt, aes(x=sex, y=sleep_fraction, fill=sex)) + 
+  geom_boxplot(outlier.colour = NA) +
+  geom_jitter(alpha=.5) +
+  facet_grid(TrtLin ~ .) +
+  scale_y_continuous(name= "Fraction of time sleeping",labels = scalespercent)
 
 
 
@@ -278,14 +275,14 @@ summary_dt
 #If we are interested in the effect of sex AND genotype,
 #as well as their interaction, we can model our response
 #variable with a formula sleep_fraction_all ~ sex  genotype
-model - aov(sleep_fraction_all ~ sex  TrtLin, summary_dt)
+model <- aov(sleep_fraction_all ~ sex  TrtLin, summary_dt)
 summary(model)
 
 ggplot(summary_dt, aes(x=sex, y=sleep_fraction_d, fill=sex)) + 
   geom_boxplot(outlier.colour = NA) +
   geom_jitter(alpha=.5) +
   facet_grid(TrtLin ~ .) +
-  scale_y_continuous(name= Fraction of time sleeping,labels = scalespercent)
+  scale_y_continuous(name= "Fraction of time sleeping",labels = scalespercent)
 
 #bout analysis seems irrelevant but httpsrethomics.github.iosleepr.html#bout-analysis
 

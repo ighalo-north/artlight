@@ -35,6 +35,10 @@ ggplot1 <- ggsurvplot(fit, size = 2, censor = FALSE, legend = c(.25,.50),legend.
 
 ggplot1 + xlab("Age (Days)") + ylab("Proportion Alive")
 
+longev_data <- longev_data %>%
+  dplyr::select(-specific)
+
+saveRDS(longev_data, "../data/clean_longev.rds")
 
 
 

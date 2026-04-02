@@ -45,7 +45,10 @@ mate_choice <- (mate_choice
                 |> filter(day==2 | !(arena %in% excluded)) #remove unused arenas
                 )
 
-summary(mate_choice)               
+summary(mate_choice)   
+
+saveRDS(mate_choice, "../data/clean_matechoice.rds")
+
 
 
                  

@@ -26,7 +26,7 @@ etoa_not_ecl <- (merge(etoa_eclosed,flies_eclosed,by='id') #add info about treat
                       |> select(-total_eclosed) #remove total eclosed column to match format of etoa_eclosed
                       |> mutate(time = 246, sex = 'NA', eclosed = 0) #change values for uneclosed flies
                       |> uncount(not_eclosed) #create row for every uneclosed fly
-) 
+)
 
 etoa_data <- (rbind(etoa_eclosed,etoa_not_ecl) #add data for eclosed and uneclosed flies together
               |> mutate(across(where(is.character),as.factor)) 

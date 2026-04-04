@@ -36,15 +36,141 @@ setwd(getwd())
 metadata <- fread("metadata_alltimes.csv")
 metadata
 
+files <- list.files(pattern = "Monitor.*\\.txt$")
+
+check_gaps <- function(file) {
+  df <- read.table(file, sep = "\t", header = FALSE, fill = TRUE, stringsAsFactors = FALSE)
+  
+  # combine date + time
+  times <- as.POSIXct(
+    paste(df[[2]], df[[3]]),
+    format = "%d %b %y %H:%M:%S",
+    tz = "UTC"
+  )
+  
+  # compute diffs
+  dt <- as.numeric(diff(times))
+  
+  # indices where gap > 1 hr
+  idx <- which(dt > 3600)
+  
+  if (length(idx) > 0) {
+    cat("\nFile:", file, "\n")
+    for (i in idx) {
+      cat("Gap:", dt[i], "seconds\n")
+      print(df[i:(i+1), ])
+      cat("----\n")
+    }
+  }
+  
+  return(length(idx) > 0)
+}
+problem_files <- files[sapply(files, check_gaps)]
+
+
+df <- read.table("Monitor1.txt", sep="\t", header=FALSE, fill=TRUE, stringsAsFactors=FALSE)
+times <- as.POSIXct(paste(df[[2]], df[[3]]), format="%d %b %y %H:%M:%S")
+
+# First timestamp in file
+head(times, 1)
+
+# Compare with metadata
+metadata$start_datetime[1]  # Should be the same day and hour
+
+
 #reformat start and end time into the format damr wants (it's soooo picky)
 metadata$start_datetime <- format(
   ymd_hm(metadata$start_datetime),
-  "%Y-%m-%d %H%M%S"
+  "%Y-%m-%d %H:%M:%S"
 )
 metadata$stop_datetime <- format(
   ymd_hm(metadata$stop_datetime),
-  "%Y-%m-%d %H%M%S"
+  "%Y-%m-%d %H:%M:%S"
 )
+
+library(dplyr)
+library(lubridate)
+Sys.setlocale("LC_TIME", "C")  # ensure English month names
+
+library(stringr)
+library(data.table)
+
+# List all your Monitor files
+files <- list.files(pattern = "Monitor.*\\.txt$")
+
+# Function to fix hours in a file
+fix_hours <- function(file) {
+  # Read file as text lines
+  lines <- readLines(file)
+  
+  # Replace single-digit hour at start of time with leading zero
+  # Matches " H:MM" after the date part
+  lines_fixed <- str_replace(lines, "(\\d{1,2} [A-Za-z]{3} \\d{2} )([0-9]):", "\\10\\2:")
+  
+  # Overwrite the file
+  writeLines(lines_fixed, file)
+}
+
+# Apply to all files
+lapply(files, fix_hours)
+
+library(readr)
+library(dplyr)
+library(stringr)
+
+# Load metadata CSV
+metadata <- read_csv("metadata_alltimes_fixed.csv", show_col_types = FALSE)
+
+# Fix single-digit hour by padding with zero
+metadata <- metadata %>%
+  mutate(
+    start_datetime = str_replace(start_datetime, "(\\d{4}-\\d{2}-\\d{2} )([0-9]):", "\\10\\2:"),
+    stop_datetime  = str_replace(stop_datetime, "(\\d{4}-\\d{2}-\\d{2} )([0-9]):", "\\10\\2:")
+  )
+
+# Verify
+head(metadata$start_datetime)
+head(metadata$stop_datetime)
+
+# Save back to CSV
+write_csv(metadata, "metadata_alltimes_fixed.csv")
+files <- list.files(pattern = "^Monitor.*\\.txt$")
+
+problem_report <- list()
+
+for (f in files) {
+  lines <- readLines(f)
+  split_lines <- strsplit(lines, "\\s+")
+  cols_per_row <- sapply(split_lines, length)
+  
+  truncated_rows <- which(cols_per_row < 4)
+  
+  # only rows with >=3 columns for timestamps
+  valid_lines <- which(cols_per_row >= 3)
+  timestamps <- sapply(split_lines[valid_lines], function(x) paste(x[2], x[3]))
+  
+  times <- as.POSIXct(timestamps, format = "%d %b %y %H:%M:%S", tz = "America/New_York")
+  
+  na_time_rows <- valid_lines[is.na(times)]
+  
+  # intervals
+  valid_time_idx <- which(!is.na(times))
+  dt <- diff(times[valid_time_idx])
+  non60_idx <- which(as.numeric(dt, units="secs") != 60)
+  non60_rows <- sort(unique(c(valid_time_idx[non60_idx], valid_time_idx[non60_idx + 1])))
+  non60_rows <- valid_lines[non60_rows]
+  
+  problem_report[[f]] <- list(
+    truncated_rows = truncated_rows,
+    na_time_rows = na_time_rows,
+    non60_rows = non60_rows
+  )
+  
+  cat("File:", f, "\n")
+  cat("  Truncated rows:", truncated_rows, "\n")
+  cat("  Timestamp parse failures:", na_time_rows, "\n")
+  cat("  Non-60s interval rows:", non60_rows, "\n\n")
+}
 
 #link da dam data
 metadata <- link_dam_metadata(metadata, result_dir = getwd())

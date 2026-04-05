@@ -15,8 +15,11 @@ longev_data <- (read_excel("data/Longevity_Final.xlsx")
 )
 summary(longev_data)
 longev_data$status <- ifelse(longev_data$fly_lifespan == "8",0,1)
+longev_data$vial <- as.factor(longev_data$vial)
+longev_data$lineage <- as.factor(longev_data$lineage)
 
 head(longev_data)
+str(longev_data)
 
 m1 <- coxme(Surv(fly_lifespan, event=status) ~ treatment*sex + (1|treatment/lineage/vial), data=longev_data) 
 

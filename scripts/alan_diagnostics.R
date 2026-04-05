@@ -51,12 +51,51 @@ drop1(linalan, test="F")
 #draw diagnostic for linear model
 performance::check_model(linalan)
 
-
+alan <- alan |> 
+  mutate(Generation_factor = as.factor(Generation))
 #vs a linear mixed model (the proper way to analyze this data)----
 lmeralan <- lmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (Generation|day) + (1|maze_position) + (Treatment|Lineage) + (1|Maze),
                  data = alan)
 drop1(lmeralan, test="Chisq") #test=Chisq? or none? --> same output actually so nvm
   #test=user is pointless atp
+
+#okay so what if we use a gamma distribution with glmm----
+gg0 <- ggplot(alan,aes(Generation_factor,Lightscore))+geom_point()
+
+gg1 <- gg0 + geom_smooth(method="glm",colour="red",
+                         formula=y~x,
+                         method.args=list(family=Gamma(link="log")))
+gg1 <- glm(Lightscore ~ Generation_factor*Sex*Treatment + time_of_day + (Generation_factor|day) + (1|maze_position) + (Treatment|Lineage) + (1|Maze), data = alan, family=quasipoisson(link="log"))
+summary(gg1)
+
+mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation_factor/day) + (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze) + (1|Maze/Light_Side), data = alan, family=Gamma(link="log"))
+
+'
+1: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+  Model failed to converge with max|grad| = 0.0303779 (tol = 0.002, component 1)
+  See ?lme4::convergence and ?lme4::troubleshooting.
+2: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+  Model is nearly unidentifiable: very large eigenvalue
+ - Rescale variables?;Model is nearly unidentifiable: large eigenvalue ratio
+ - Rescale variables?
+'
+#from BB on stackoverflow
+  #the basic problem is that you have multiple 
+  #observations in your data set of x per m, but they all have the same response value, so your x 
+  #random effect is confounded with everything else
+
+#removed 1|maze/light_side
+mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation_factor/day) + (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="log"))
+mod_matrix <- model.matrix(mymodel)
+colnames(mod_matrix)
+
+#remove (1|Maze)
+mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation_factor/day) + (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze/Light_Side), data = alan, family=Gamma(link="log"))
+#failed to converge
+
+
+plot(gg1) #diagnostics 1 by 1
+performance::check_model(gg1)
 
 #draw diagnostics for linear mixed model
 testDispersion(lmeralan)

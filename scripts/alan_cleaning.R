@@ -35,7 +35,7 @@ vial_number2 <- match(c("16"), names(alan))
 vials <- c(vial_number1:vial_number2) #indexes of cols with vial numbers (count data about the flies' position)
 
 #find anything that's not numeric in the numbers sections
-should_be_numeric <- c("Generation", "day", "Lineage", 1:16, "Lightscore", "total_Flies", "start_time_num", "end_time_num", "time_elapsed_num", "flies_in", "prop_out") ## list of columns (indices or names)
+should_be_numeric <- c("Generation", "Lineage", "day", "Lineage", 1:16, "Lightscore", "total_Flies", "start_time_num", "end_time_num", "time_elapsed_num", "flies_in", "prop_out") ## list of columns (indices or names)
 
 find_bad_nums <- function(x){
   x_num <- suppressWarnings(as.numeric(x))
@@ -57,7 +57,7 @@ alan_sum <- (alan
                                  .fns = list(
                                    mean = ~ mean(.,na.rm=TRUE),
                                    se   = ~ sd(., na.rm = TRUE) / sqrt(sum(!is.na(.x))))),
-                          .by = c(Generation, TrtLin, Sex)
+                          .by = c(Generation, TrtLin, Sex, Treatment, Lineage)
              )
 )
 
@@ -96,6 +96,10 @@ alan <- alan %>%
       TRUE ~ NA
     )
   )
+alan <- alan |> 
+  mutate(maze_position = as.factor(maze_position))
+
+
 '
 if ABCD and A: 1
 if ABCD and B: 2
@@ -114,11 +118,20 @@ D 1
 
 '
 
+alan$TrtLin <- factor(alan$TrtLin, levels = c("S1", "S2", "S3", "S4", "C1", "C2", "C3", "C4"))
 
 
 
 
-#plot as sanity check output
+colorsA <- c("red", "purple", "orange", "darkred")
+colorsB <- c("lightblue", "darkblue", "blue", "lightgreen")
+
+blue_base <- c("#08306B", "#4292C6")     # deep → medium blue
+orange_base <- c("#7F2704", "#E6550D")   # dark → light orange
+blue_gradient <- colorRampPalette(blue_base)(4)
+orange_gradient <- colorRampPalette(orange_base)(4)
+mypalette <- c(blue_gradient, orange_gradient)
+
 gg0 <-  
   ggplot(alan_sum, aes(x=Generation, y=Lightscore_mean,
                        colour=TrtLin, group=TrtLin)) +
@@ -131,15 +144,17 @@ gg0 <-
   theme_bw()
 
 print(gg0)
-gg0 + filter(alan_sum, stringr::str_detect(TrtLin, "^C"))
-gg0 + filter(alan_sum, stringr::str_detect(TrtLin, "^S"))
+gg0 + filter(alan_sum, stringr::str_detect(TrtLin, "^C")) + scale_color_manual(values=orange_gradient)
+gg0 + filter(alan_sum, stringr::str_detect(TrtLin, "^S")) + scale_color_manual(values=blue_gradient)
 
-#one facet per treatment:
-alan_sum2 <- mutate(alan_sum, grp = substr(TrtLin, 1, 1))
-gg0 + alan_sum2 + facet_wrap(~grp,  nrow = 1)
+#one facet per treatment
+gg0 + alan_sum + facet_wrap(~Treatment,  nrow = 1) + scale_color_manual(values = mypalette, labels = c("S1", "S2", "S3", "S4", "C1", "C2", "C3", "C4")) 
 
 #Use the saveRDS function in R to save a clean (or clean-ish) version of your data
 saveRDS(alan, "../data/clean_alan_gen25.rds")
+
+
+#graphing----
 
 
 

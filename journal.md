@@ -97,14 +97,21 @@ This is where we will record anything we do that involves looking at patterns in
 <!-- -->
 
 -   Response Variable: Mate success
+
 -   Fixed Effects: treatment
+
 -   Random effects: lineage pair, day/arena
--       JR: I no longer thnk arena should be included in the model at all, it wouldn't make sense, there would only be two data points from each arena on each day, and their variance would not be informative for the model. (always going to be 0 and 1 or 0 and 0). Day should be moved to a fixed effect since there are only two levels.
+
+-   
+
+    ```         
+      JR: I no longer thnk arena should be included in the model at all, it wouldn't make sense, there would only be two data points from each arena on each day, and their variance would not be informative for the model. (always going to be 0 and 1 or 0 and 0). Day should be moved to a fixed effect since there are only two levels.
+    ```
 
 **Circadian Rhythm**
 
 -   response variable: activity (baseline evolved activity between populations)
 -   Each comparison of activity between populations will be run through linear mixed models (“lme4 ” package)
--   Fixed effects: treatment, sex 
+-   Fixed effects: treatment, sex
 -   Random effects: monitor (1 vs 2) lineage, day
 -   To account for the effects of circadian rhythm on activity, either impose a circadian periodicity (sin(pihour/12) + cos(pihour/12)) or fit a natural smooth cubic spline with 5 knots (ns(hour, 5)) for hours. we will start by looking at 1 h totals (counts per hour)

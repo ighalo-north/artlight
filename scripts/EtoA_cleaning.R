@@ -23,7 +23,7 @@ etoa_eclosed <- long_etoa |> uncount(count) |> mutate(eclosed = 1) #add row for 
 
 etoa_not_ecl <- (merge(etoa_eclosed,flies_eclosed,by='id') #add info about treatment and vial to counts of uneclosed flies
                       |> distinct(id, .keep_all = TRUE) #keep one row per vial
-                      |> select(-total_eclosed) #remove total eclosed column to match format of etoa_eclosed
+                      |> dplyr::select(-total_eclosed) #remove total eclosed column to match format of etoa_eclosed
                       |> mutate(time = 246, sex = 'NA', eclosed = 0) #change values for uneclosed flies
                       |> uncount(not_eclosed) #create row for every uneclosed fly
 )

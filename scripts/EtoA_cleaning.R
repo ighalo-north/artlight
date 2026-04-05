@@ -2,7 +2,7 @@ library(readxl)
 library(tidyr)
 library(dplyr)
 
-wide_etoa <- read_excel("../data/EtoA_data.xlsx", range = 'A1:AE81') 
+wide_etoa <- read_excel("data/EtoA_data.xlsx", range = 'A1:AE81') 
 
 long_etoa <- (wide_etoa |> 
                 pivot_longer(cols = 7:31, names_to = 'time', values_to = "count" ) |> 
@@ -31,11 +31,12 @@ etoa_not_ecl <- (merge(etoa_eclosed,flies_eclosed,by='id') #add info about treat
 etoa_data <- (rbind(etoa_eclosed,etoa_not_ecl) #add data for eclosed and uneclosed flies together
               |> mutate(across(where(is.character),as.factor)) 
               |> mutate(lineage = factor(lineage))
-              |> mutate(time = as.numeric(time))
+              |> mutate(time = as.numeric(as.character(time)))
 )
 
 summary(etoa_data)
 str(etoa_data)
+etoa_data
 
-saveRDS(etoa_data,"../data/etoa_data_clean.rds")
+saveRDS(etoa_data,"data/etoa_data_clean.rds")
 

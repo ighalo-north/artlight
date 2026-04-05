@@ -1,6 +1,5 @@
 library(readxl)
 library(DHARMa)
-library(car)
 library(lme4)
 library(survival)
 library(coxme)
@@ -9,16 +8,22 @@ library(dplyr)
 library(janitor) 
 library(survminer)
 
-longev_data <- (read_excel("../data/Longevity_Final.xlsx") 
+longev_data <- (read_excel("data/Longevity_Final.xlsx") 
                 |> mutate(across(where(is.character),as.factor))
                 |> janitor::clean_names()
 )
 summary(longev_data)
 longev_data$status <- ifelse(longev_data$fly_lifespan == "8",0,1)
 
-#?Surv
+head(longev_data)
+
 Surv(longev_data$fly_lifespan, event=longev_data$status) # Tentative model, probably not properly done!
-m1 <- coxme(Surv(fly_lifespan, event=status) ~ treatment + (1|treatment/lineage) + (1|vial), data=longev_data) 
+
+
+m1 <- coxme(Surv(fly_lifespan, event=status) ~ treatment*sex + (1|treatment:(lineage/vial)), data=longev_data) 
+
+
+
 summary(m1)
 Anova(m1)
 

@@ -49,7 +49,7 @@ summary(mate_choice)
 
 mate_choice
 
-saveRDS(mate_choice, "../data/clean_matechoice.rds")
+saveRDS(mate_choice, "data/clean_matechoice.rds")
 
 
 

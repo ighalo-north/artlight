@@ -85,21 +85,37 @@ mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Gene
   #random effect is confounded with everything else
 
 #removed 1|maze/light_side
-mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation_factor/day) + (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="log"))
+oldmodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation_factor/day) + (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="log"))
+
+
+mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation) + (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="log"))
 mod_matrix <- model.matrix(mymodel)
 colnames(mod_matrix)
 
-#remove (1|Maze)
-mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation_factor/day) + (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze/Light_Side), data = alan, family=Gamma(link="log"))
-#failed to converge
+
+#the intercept and generation varying by lineage nested within treatment;
+mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + 
+                   (1 + Generation| Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="log"))
+
+
+#trying things
+mymodel <- glmer(Lightscore ~ Generation_factor*Sex*Treatment + time_of_day + 
+                   (1 |Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="log"))
+
+
+
+summary(alan)
+#draw diagnostics for linear mixed model
+testDispersion(mymodel)
+plot(simulateResiduals(fittedModel = mymodel, plot = F))
+
+
 
 
 plot(gg1) #diagnostics 1 by 1
 performance::check_model(gg1)
 
-#draw diagnostics for linear mixed model
-testDispersion(lmeralan)
-plot(simulateResiduals(fittedModel = lmeralan, plot = F))
+
 
 #trying to fix ks test results
 simulationOutput <- simulateResiduals(lmeralan)

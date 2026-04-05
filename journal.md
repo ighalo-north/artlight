@@ -99,6 +99,7 @@ This is where we will record anything we do that involves looking at patterns in
 -   Response Variable: Mate success
 -   Fixed Effects: treatment
 -   Random effects: lineage pair, day/arena
+-       JR: I no longer thnk arena should be included in the model at all, it wouldn't make sense, there would only be two data points from each arena on each day, and their variance would not be informative for the model. (always going to be 0 and 1 or 0 and 0). Day should be moved to a fixed effect since there are only two levels.
 
 **Circadian Rhythm**
 

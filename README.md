@@ -49,9 +49,8 @@ prez plans
 
 -   code excerpts for the model (var names are readable, makes more sense than making DAG diagrams
 
--   results may be consistent with other literature even with nonsignificance of my data and significance of their data 
+-   results may be consistent with other literature even with nonsignificance of my data and significance of their data
 
     -   more relevant for writeup
 
     -   look at the actual numbers
-

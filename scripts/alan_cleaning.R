@@ -154,9 +154,6 @@ gg0 + alan_sum + facet_wrap(~Treatment,  nrow = 1) + scale_color_manual(values =
 saveRDS(alan, "../data/clean_alan_gen25.rds")
 
 
-#graphing----
-
-
 
 
 

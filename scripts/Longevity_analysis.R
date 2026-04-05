@@ -24,7 +24,7 @@ str(longev_data)
 m1 <- coxme(Surv(fly_lifespan, event=status) ~ treatment*sex + (1|treatment/lineage/vial), data=longev_data) 
 
 summary(m1)
-performance(m1) #does not work with cox mixed effects regression, it needs to be done manually
+check_model(m1) #does not work with cox mixed effects regression, it needs to be done manually
 
 #Schoenfeld Residuals test - check proportional hazards assumptions
 test_ph <- cox.zph(m1)

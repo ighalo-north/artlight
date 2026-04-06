@@ -7,11 +7,12 @@ library(MASS)
 library(car)
 library(lme4)
 library(lmerTest)
+library(performance)
 
 options(contrasts=c("contr.sum", "contr.poly"))
 
 #working directory MUST be source file location - there's a way to automate this but later
-alan <- readRDS("../data/clean_alan_gen25.rds")
+alan <- readRDS("data/clean_alan_gen25.rds")
 
 #small model----
 linalan_null <- lm(Lightscore ~ 1, data = alan) #null hypothesis
@@ -88,6 +89,21 @@ colnames(mod_matrix)
 #the intercept and generation varying by lineage nested within treatment;
 mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + 
                    (1 + Generation| Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"))
+
+mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + 
+                   (1 + Generation| Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="log"))
+
+mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + (1|Maze), data = alan, family=Gamma(link="log"))
+
+mymodel <- lmer(Lightscore ~ Generation*Sex*Treatment + (1|Maze), data = alan)
+
+performance(mymodel)
+
+
+mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + 
+                   (1 + Generation| Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="log"))
+
+help('isSingular')
 
 
 #trying things

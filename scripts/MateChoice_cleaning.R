@@ -5,7 +5,7 @@ library(dplyr)
 
 raw_mate_data <- (read_excel("data/Mate choice FINAL.xlsx", sheet=2)
                   |> clean_names()
-                  |> select(day,arena,lineage_pair,s_male_mated)
+                  |> dplyr::select(day,arena,lineage_pair,s_male_mated)
 )
  
 head(raw_mate_data)

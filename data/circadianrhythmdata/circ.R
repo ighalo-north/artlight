@@ -2,7 +2,7 @@
 #https/cran.r-project.orgwebpackagesdamrdamr.pdf
 #documentation for damr package with examples <3 <3 <3
 
-#DAM Drosophila Activity Monitor
+#DAM: Drosophila Activity Monitor
 #i measured the activity of each of my 8 replicate lineages using 2 monitors at a time
 '
 We have 2 independent monitors, each connected to their own 
@@ -13,16 +13,6 @@ We will only analyze 24 hours of data for each trial (9pm to 9pm)
   the 13 hours beforehand allows the flies to acclimate to the environment.
 '
 
-'
-ggetho() is the core function. It expresses the relationship between variables. In this respect, it works very much like ggplot(), but it also pre-processes the data.
-
-ggetho() is only a layer on top of ggplot(). It works exclusively with 
-  behavr tables and does preprocess data  before calling ggplot(). 
-
-ggetho() does return ggplot a object, therefore, 
-  layers available in ggplot2 can be used natively on top of ggetho
-'
-#DAM: Drosophila Activity Monitor
 library(damr) #main pkg
 library(sleepr) #identifies when an animal is asleep or not (tied to behavr pkg)
 library(lubridate) #fix date format for damr
@@ -31,9 +21,11 @@ library(readr)
 library(tidyverse)
 library(dplyr)
 library(stringr)
+library(data.table)
+library(MASS)
+library(car)
 
-setwd(getwd())
-metadata <- fread("metadata_alltimes.csv")
+metadata <- fread("metadata.csv")
 metadata
 
 files <- list.files(pattern = "Monitor.*\\.txt$")
@@ -67,13 +59,11 @@ check_gaps <- function(file) {
 }
 problem_files <- files[sapply(files, check_gaps)]
 
-
 df <- read.table("Monitor1.txt", sep="\t", header=FALSE, fill=TRUE, stringsAsFactors=FALSE)
 times <- as.POSIXct(paste(df[[2]], df[[3]]), format="%d %b %y %H:%M:%S")
 
 # First timestamp in file
 head(times, 1)
-
 # Compare with metadata
 metadata$start_datetime[1]  # Should be the same day and hour
 
@@ -88,15 +78,7 @@ metadata$stop_datetime <- format(
   "%Y-%m-%d %H:%M:%S"
 )
 
-library(dplyr)
-library(lubridate)
 Sys.setlocale("LC_TIME", "C")  # ensure English month names
-
-library(stringr)
-library(data.table)
-
-# List all your Monitor files
-files <- list.files(pattern = "Monitor.*\\.txt$")
 
 # Function to fix hours in a file
 fix_hours <- function(file) {
@@ -110,17 +92,11 @@ fix_hours <- function(file) {
   # Overwrite the file
   writeLines(lines_fixed, file)
 }
-
 # Apply to all files
 lapply(files, fix_hours)
-
-library(readr)
-library(dplyr)
-library(stringr)
-
 # Load metadata CSV
 metadata <- read_csv("metadata_alltimes_fixed.csv", show_col_types = FALSE)
-
+'
 # Fix single-digit hour by padding with zero
 metadata <- metadata %>%
   mutate(
@@ -128,14 +104,10 @@ metadata <- metadata %>%
     stop_datetime  = str_replace(stop_datetime, "(\\d{4}-\\d{2}-\\d{2} )([0-9]):", "\\10\\2:")
   )
 
-# Verify
-head(metadata$start_datetime)
-head(metadata$stop_datetime)
-
 # Save back to CSV
 write_csv(metadata, "metadata_alltimes_fixed.csv")
 files <- list.files(pattern = "^Monitor.*\\.txt$")
-
+'
 problem_report <- list()
 
 for (f in files) {
@@ -180,10 +152,8 @@ metadata #view da dam data
 metadata$TrtLin <- factor(paste(metadata$treatment, metadata$lineage, sep = ))
 
 #treat all of these factors as factors
-metadata$lineage <- as.factor(metadata$lineage)
-metadata$treatment <- as.factor(metadata$treatment)
-metadata$TrtLin <- as.factor(metadata$TrtLin)
-metadata$sex <- as.factor(metadata$sex)
+metadata <- metadata |> 
+  mutate(across(c("lineage", "treatment", "TrtLin", "sex"), as.factor))
 #metadata$region_id <- as.factor(metadata$region_id) #scared to mess with the built in variables
 
 #identifies when an animal is asleep or not (tied to behavr pkg)
@@ -196,8 +166,8 @@ dtallflies <- load_dam(metadata) #load only good data
 
 #good practice do not include (or even look at) vials whose fly died or escaped
 #but i might also just include them until death
-dtok <- load_dam(metadata[status=="OK"], FUN = sleepr::sleep_dam_annotation) #load only good data
-dt <- load_dam(metadata[status!="none"], FUN = sleepr::sleep_dam_annotation) #load only good data
+dt <- load_dam(metadata[status=="OK"], FUN = sleepr::sleep_dam_annotation) #load only good data
+dtnotnone <- load_dam(metadata[status!="none"], FUN = sleepr::sleep_dam_annotation) #load only good data
 summary(dt)
 
 dt_curated <- curate_dead_animals(dt) #remove data of dead animals after they died (done by a movement threshold or smthg)
@@ -210,6 +180,73 @@ dt_curated <- dt_curated %>%
   mutate(monitor = as.integer(str_extract(id, "(?<=Monitor)\\d+")))
 
 #DO NOT CHANGE THE ABOVE----- it's working finally!!!
+
+#compute overall average fraction of time spent moving
+#the average time spent moving per 1000 (rounded)
+mean_mov_dt <- dt[, .(mean_moving = round(mean(moving), 1000)), by=id]
+#join curent meta and the summary table
+new_meta <- dt[mean_mov_dt, meta=T]
+#set new metadata
+setmeta(dt, new_meta)
+head(dt[meta=T])
+
+#mean activity
+activity_dt <- dt[,
+                  .(mean_acti = mean(activity),
+                    max_acti = max(activity)
+                  ),
+                  by='id']
+activity_dt
+
+summary_dt <- summary_dt |>
+  mutate(monitor = as.integer(str_extract(id, "(?<=Monitor)\\d+")))
+summary_dt <- summary_dt |>
+  mutate(monitor=as.factor(monitor))
+
+
+
+
+#bout analysis seems irrelevant but httpsrethomics.github.iosleepr.html#bout-analysis
+
+#light phase info
+dt[, phase := ifelse((t %% (24*3600)) < (12*3600), "L", "D")]
+
+summary_dt <- 
+  rejoin(dt[,
+            .(
+              #this is where the computation happens
+              sleep_fraction = mean(asleep),
+              sleep_fraction_all = mean(asleep),
+              sleep_fraction_l = mean(asleep[phase == "L"]),
+              sleep_fraction_d = mean(asleep[phase == "D"]),
+              move_fraction = mean(moving),
+              move_fraction_all = mean(moving),
+              move_fraction_l = mean(moving[phase == "L"]),
+              move_fraction_d = mean(moving[phase == "D"])
+            ),
+            ,by=id])
+summary_dt
+
+saveRDS(summary_dt, "../../data/clean_circ.rds")
+
+
+
+
+
+
+
+
+
+
+#example of anova
+#If we are interested in the effect of sex AND genotype,
+#as well as their interaction, we can model our response
+#variable with a formula sleep_fraction_all ~ sex  genotype
+model <- aov(sleep_fraction_all ~ sex*TrtLin, data = summary_dt)
+summary(model)
+model <- aov(move_fraction_all ~ sex*TrtLin, data = summary_dt)
+summary(model)
+
 
 #graph sleep----
 sleep_dt <- dt_curated[, .(sleep_fraction = mean(asleep)), by = id]
@@ -278,17 +315,6 @@ allplot <- ggetho(dt, aes(x=t, y=TrtLin, z=moving)) + stat_bar_tile_etho()
 allplot
 
 
-#compute overall average fraction of time spent moving
-#the average time spent moving per 1000 (rounded)
-mean_mov_dt <- dt[, .(mean_moving = round(mean(moving), 1000)), by=id]
-#join curent meta and the summary table
-new_meta <- dt[mean_mov_dt, meta=T]
-#set new metadata
-setmeta(dt, new_meta)
-head(dt[meta=T])
-
-
-
 '
 Sometimes, we also want to aggregate individuals per group. 
 For instance, males average vs females average. 
@@ -355,62 +381,56 @@ To put the annotation in the background,
   add some transparency (alpha = 0.3). 
 We also remove the outline of the boxes
 '
-pl <- ggetho(dt, aes(x=t, y=moving)) + stat_pop_etho() + 
-  stat_ld_annotations()
+pl <- ggetho(dt, aes(x = t, y = moving, group = treatment, colour = treatment), time_wrap = 24*3600) + 
+  stat_pop_etho() + 
+  stat_ld_annotations() + 
+  scale_color_manual(values = c("#C23E00", "#0A3A8A"))+
+  labs(y = "proportion of time spent moving")
 pl
 
-pl <- ggetho(dt, aes(x=t, y=moving)) +
+pl <- ggetho(dt, aes(x=t, y=moving, group = treatment, colour = treatment)) +
   stat_ld_annotations(height=1, alpha=0.3, outline = NA, period = 1260) +
-  stat_pop_etho()
+  stat_pop_etho() +
+  scale_color_manual(values = c("#C23E00", "#0A3A8A"))+
+  labs(y = "proportion of time spent moving")
 pl
 
 
-activity_dt <- dt[,
-              .(mean_acti = mean(activity),
-                max_acti = max(activity)
-              ),
-              by='id']
-activity_dt
-#spent sleeping
 
-#light phase info
-dt[, phase = ifelse(t %% (24/3600) - (12/3600), D, L)]
-
-summary_dt <- 
-  rejoin(dt[,
-            .(
-              #this is where the computation happens
-              sleep_fraction = mean(asleep),
-              sleep_fraction_all = mean(asleep),
-              sleep_fraction_l = mean(asleep[phase == L]),
-              sleep_fraction_d = mean(asleep[phase == D])
-            ),
-            ,by=id])
-summary_dt
 
 ggplot(summary_dt, aes(x=sex, y=sleep_fraction, fill=sex)) + 
   geom_boxplot(outlier.colour = NA) +
   geom_jitter(alpha=.5) +
   facet_grid(TrtLin ~ .) +
-  scale_y_continuous(name= "Fraction of time sleeping",labels = scalespercent)
+  scale_y_continuous(name= "Fraction of time sleeping")
 
-
-
-
-#example of anova
-#If we are interested in the effect of sex AND genotype,
-#as well as their interaction, we can model our response
-#variable with a formula sleep_fraction_all ~ sex  genotype
-model <- aov(sleep_fraction_all ~ sex  TrtLin, summary_dt)
-summary(model)
-
-ggplot(summary_dt, aes(x=sex, y=sleep_fraction_d, fill=sex)) + 
+ggplot(summary_dt, aes(x=interaction(sex, treatment), y=sleep_fraction, fill=sex)) + 
   geom_boxplot(outlier.colour = NA) +
   geom_jitter(alpha=.5) +
-  facet_grid(TrtLin ~ .) +
-  scale_y_continuous(name= "Fraction of time sleeping",labels = scalespercent)
+  scale_y_continuous(name= "Fraction of time sleeping")+
+  scale_fill_manual(values = c("lightpink", "lightblue"))
 
-#bout analysis seems irrelevant but httpsrethomics.github.iosleepr.html#bout-analysis
+ggplot(summary_dt, aes(x=interaction(sex, treatment), y=move_fraction, fill=sex)) + 
+  geom_boxplot(outlier.colour = NA) +
+  geom_jitter(alpha=.5) +
+  scale_y_continuous(name= "Fraction of time moving")+
+  scale_fill_manual(values = c("lightpink", "lightblue"))
+
+ggplot(summary_dt, aes(x=interaction(sex, treatment), y=move_fraction_d, fill=sex)) + 
+  geom_boxplot(outlier.colour = NA) +
+  geom_jitter(alpha=.5) +
+  scale_y_continuous(name= "Fraction of time moving at night")+
+  scale_fill_manual(values = c("lightpink", "lightblue"))
+
+ggplot(summary_dt, aes(x=interaction(sex, treatment), y=sleep_fraction_l, fill=sex)) + 
+  geom_boxplot(outlier.colour = NA) +
+  geom_jitter(alpha=.5) +
+  scale_y_continuous(name= "Fraction of time sleeping at day")+
+  scale_fill_manual(values = c("lightpink", "lightblue"))
+
+
+
+
 
 
 

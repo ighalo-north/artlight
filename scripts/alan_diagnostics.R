@@ -3,7 +3,6 @@ library(magrittr)
 library(tidyverse)
 library(emmeans)
 library(DHARMa)
-library(emmeans)
 library(MASS)
 library(car)
 library(lme4)
@@ -70,38 +69,34 @@ summary(gg1)
 
 mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation_factor/day) + (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze) + (1|Maze/Light_Side), data = alan, family=Gamma(link="log"))
 
-'
-1: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
-  Model failed to converge with max|grad| = 0.0303779 (tol = 0.002, component 1)
-  See ?lme4::convergence and ?lme4::troubleshooting.
-2: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
-  Model is nearly unidentifiable: very large eigenvalue
- - Rescale variables?;Model is nearly unidentifiable: large eigenvalue ratio
- - Rescale variables?
-'
-#from BB on stackoverflow
+#failed to converge; from BB on stackoverflow
   #the basic problem is that you have multiple 
   #observations in your data set of x per m, but they all have the same response value, so your x 
   #random effect is confounded with everything else
 
 #removed 1|maze/light_side
-oldmodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation_factor/day) + (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="log"))
+oldmodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + 
+                    (1 | Generation_factor/day) + (1|maze_position) + 
+                    (1 | Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"))
 
 
-mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation) + (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="log"))
+mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation) + (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"))
 mod_matrix <- model.matrix(mymodel)
 colnames(mod_matrix)
 
 
 #the intercept and generation varying by lineage nested within treatment;
 mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + 
-                   (1 + Generation| Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="log"))
+                   (1 + Generation| Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"))
 
 
 #trying things
-mymodel <- glmer(Lightscore ~ Generation_factor*Sex*Treatment + time_of_day + 
-                   (1 |Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="log"))
+mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + 
+                   (1 + Generation|Treatment:Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"), 
+                    control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
 
+
+summary(mymodel)
 
 
 summary(alan)

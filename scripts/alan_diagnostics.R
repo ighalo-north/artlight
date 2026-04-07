@@ -68,7 +68,7 @@ gg1 <- gg0 + geom_smooth(method="glm",colour="red",
 gg1 <- glm(Lightscore ~ Generation_factor*Sex*Treatment + time_of_day + (Generation_factor|day) + (1|maze_position) + (Treatment|Lineage) + (1|Maze), data = alan, family=quasipoisson(link="log"))
 summary(gg1)
 
-mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation_factor/day) + (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze) + (1|Maze/Light_Side), data = alan, family=Gamma(link="log"))
+mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation_factor/day) + (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze) + (1|Maze/Light_Side), data = alan, family=Gamma(link="inverse"))
 
 #failed to converge; from BB on stackoverflow
   #the basic problem is that you have multiple 
@@ -78,10 +78,12 @@ mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Gene
 #removed 1|maze/light_side
 oldmodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + 
                     (1 | Generation_factor/day) + (1|maze_position) + 
-                    (1 | Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"))
+                    (1 | Treatment:Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"))
 
 
-mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation) + (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"))
+mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation) + 
+                   (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze), 
+                 data = alan, family=Gamma(link="inverse"))
 mod_matrix <- model.matrix(mymodel)
 colnames(mod_matrix)
 
@@ -91,19 +93,15 @@ mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day +
                    (1 + Generation| Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"))
 
 mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + 
-                   (1 + Generation| Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="log"))
+                   (1 + Generation| Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"))
 
-mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + (1|Maze), data = alan, family=Gamma(link="log"))
-
-mymodel <- lmer(Lightscore ~ Generation*Sex*Treatment + (1|Maze), data = alan)
-
-performance(mymodel)
-
+mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + (1|Maze), data = alan, family=Gamma(link="inverse"))
 
 mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + 
-                   (1 + Generation| Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="log"))
+                   (1 + Generation:Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"))
 
 help('isSingular')
+mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + Light_Side + (1 | Generation/day) + (1|maze_position) + (1 | Treatment/Lineage), data = alan, family=Gamma(link="log"))
 
 
 #trying things
@@ -111,16 +109,19 @@ mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day +
                    (1 + Generation|Treatment:Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"), 
                     control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
 
+mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day +
+                   (1 | Treatment:Lineage), data = alan, family=Gamma(link="inverse"))
 
-summary(mymodel)
+summary(oldmodel)
+simulateResiduals(oldmodel)
 
+model1 <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1|maze_position) + (1 | Generation:Treatment:Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"))
 
 summary(alan)
 #draw diagnostics for linear mixed model
 testDispersion(mymodel)
 plot(simulateResiduals(fittedModel = mymodel, plot = F))
-
-
+performance::check_model(oldmodel)
 
 
 plot(gg1) #diagnostics 1 by 1

@@ -23,9 +23,13 @@ response variable: activity (baseline evolved activity between populations)
     either impose a circadian periodicity (sin(pihour/12) + cos(pihour/12)) 
     or fit a natural smooth cubic spline with 5 knots (ns(hour, 5)) for hours. we will start by looking at 1 h totals (counts per hour)
 '
-circmodel <- lmer(activity ~ Sex*Treatment + 
+'
+verbatimmodel <- lmer(activity ~ Sex*Treatment + 
                    (1 | monitor) + (1 | Treatment:Lineage) + (1|day), data = circ)
-circmodel2 <- llmer(mean_moving ~ treatment + (1|lineage/id), data = fly_summary)
+'
+circmodel <- lmer(mean_moving ~ sex*treatment + (1|treatment/lineage) + (1 | monitor) + (1 | experiment_id), data = circ)
+
+circmodel <- lmer(move_fraction_all ~ sex + treatment + (1|treatment:lineage:region_id) + (1 | experiment_id), data = circ)
 
 summary(circmodel)
 

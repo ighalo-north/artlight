@@ -1,6 +1,7 @@
 #https/rethomics.github.iodamr.html
 #https/cran.r-project.orgwebpackagesdamrdamr.pdf
 #documentation for damr package with examples <3 <3 <3
+#bout analysis seems irrelevant but httpsrethomics.github.iosleepr.html#bout-analysis
 
 #DAM: Drosophila Activity Monitor
 #i measured the activity of each of my 8 replicate lineages using 2 monitors at a time
@@ -198,15 +199,16 @@ activity_dt <- dt[,
                   by='id']
 activity_dt
 
-summary_dt <- summary_dt |>
-  mutate(monitor = as.integer(str_extract(id, "(?<=Monitor)\\d+")))
-summary_dt <- summary_dt |>
-  mutate(monitor=as.factor(monitor))
+
+#day and time
+dt[, datetime := sub("\\|.*", "", id)]
+dt[, day := as.integer(as.Date(datetime) - min(as.Date(datetime)))]
+dt[, day2 := as.integer(factor(date))]
+summary(dt$day)
+summary(dt$day2)
 
 
 
-
-#bout analysis seems irrelevant but httpsrethomics.github.iosleepr.html#bout-analysis
 
 #light phase info
 dt[, phase := ifelse((t %% (24*3600)) < (12*3600), "L", "D")]
@@ -226,6 +228,11 @@ summary_dt <-
             ),
             ,by=id])
 summary_dt
+
+summary_dt <- summary_dt |>
+  mutate(monitor = as.integer(str_extract(id, "(?<=Monitor)\\d+")))
+summary_dt <- summary_dt |>
+  mutate(monitor=as.factor(monitor))
 
 saveRDS(summary_dt, "../../data/clean_circ.rds")
 
@@ -250,7 +257,7 @@ summary(model)
 
 #graph sleep----
 sleep_dt <- dt_curated[, .(sleep_fraction = mean(asleep)), by = id]
-sleep_dt <- dt_curated[sleep_dt, meta = TRUE]
+sleep_dt <- dt_curated[sleep_dt]
 
 ggplot(sleep_dt, aes(x = treatment, y = sleep_fraction)) +
   stat_summary(
@@ -382,9 +389,11 @@ To put the annotation in the background,
 We also remove the outline of the boxes
 '
 pl <- ggetho(dt, aes(x = t, y = moving, group = treatment, colour = treatment), time_wrap = 24*3600) + 
-  stat_pop_etho() + 
+  stat_pop_etho(aes(fill = treatment), alpha = .5) + 
   stat_ld_annotations() + 
-  scale_color_manual(values = c("#C23E00", "#0A3A8A"))+
+  scale_color_manual(values = c("#C69214", "#6E6E6E"))+
+  scale_fill_manual(values = c("#C69214", "#6E6E6E"))+
+  coord_cartesian(ylim=c(0, 1))+
   labs(y = "proportion of time spent moving")
 pl
 

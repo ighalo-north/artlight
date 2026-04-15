@@ -1,43 +1,46 @@
 library(readxl)
 library(DHARMa)
 library(lme4)
-library(survival)
-library(coxme)
 library(tidyr)
 library(dplyr) 
 library(janitor) 
-library(survminer)
 library(ggplot2)
+library(performance)
 
 etoa_data <- readRDS("data/etoa_data_clean.rds")
 
 head(etoa_data)
 summary(etoa_data)
 
-etoa_model <- coxme(Surv(time, event=eclosed) ~ treatment + (1|treatment/lineage/vial), data=etoa_data) 
+etoa_data <- transform(etoa_data,
+                    trt_lin = interaction(treatment, lineage),
+                    trt_lin_vial = interaction(treatment, lineage, vial))
 
-summary(etoa_model)
+etoa_survival <- glmer(eclosed ~ treatment + (1|trt_lin) + (1|trt_lin_vial), family = "binomial", data=etoa_data)
 
-performance(etoa_model) #does not work with cox mixed effects regression, it needs to be done manuallt
-
-
-etoa_survival <- glmer(eclosed ~ treatment + (1|treatment:lineage:vial), family = "binomial", data=etoa_data)
 summary(etoa_survival)
-check_model(etoa_survival)
+check_model(etoa_survival) 
 
+with(etoa_data, 
+     table(trt_lin_vial, eclosed)) 
+#the influential observations identified by check_model are the instances where only one or two flies from that vial did not eclose.
+#this makes sense, and I don't think is too concerning.
 
-(1|treatment:lineage:vial)
 
 duration_data <- filter(etoa_data, eclosed == 1)
 head(duration_data)
 summary(duration_data)
 duration_data$sex <- as.factor(as.character(duration_data$sex))
 
-etoa_duration <- lm(time ~ treatment*sex, data=duration_data)
+duration_data <- transform(duration_data,
+                    trt_lin = interaction(treatment, lineage),
+                    trt_lin_vial = interaction(treatment, lineage, vial))
 
-etoa_duration <- glmer(time ~ treatment*sex + (1|treatment:lineage/vial), data=duration_data, family=Gamma(link="log"))
-
-
+etoa_duration <- glmer(time ~ treatment*sex + (1|trt_lin) + (1|trt_lin_vial), data=duration_data, family=Gamma(link="log"))
 
 summary(etoa_duration)
-check_model(etoa_duration)
+check_model(etoa_duration) 
+#Data points 284 and 283 are influential observations because the eclosed unusually late.
+#Should still be included in analysis in my opinion.
+
+

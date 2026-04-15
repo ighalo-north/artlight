@@ -8,20 +8,27 @@ library(dplyr)
 library(janitor) 
 library(survminer)
 library(ggplot2)
+library(performance)
+library(car)
 
 longev_data <- (read_excel("data/Longevity_Final.xlsx") 
                 |> mutate(across(where(is.character),as.factor))
                 |> janitor::clean_names()
 )
 summary(longev_data)
-longev_data$status <- ifelse(longev_data$fly_lifespan == "8",0,1)
+
+longev_data$status <- ifelse(longev_data$fly_lifespan == "8",0,1) #add a status column that indicates if the fly died during the experiment
 longev_data$vial <- as.factor(longev_data$vial)
 longev_data$lineage <- as.factor(longev_data$lineage)
 
 head(longev_data)
 str(longev_data)
 
-m1 <- coxme(Surv(fly_lifespan, event=status) ~ treatment*sex + (1|treatment/lineage/vial), data=longev_data) 
+longev_data <- transform(longev_data,
+                    trt_lin = interaction(treatment, lineage),
+                    trt_lin_vial = interaction(treatment, lineage, vial))
+
+m1 <- coxme(Surv(fly_lifespan, event=status) ~ treatment*sex + (1|trt_lin) + (1|trt_lin_vial), data=longev_data) 
 
 summary(m1)
 check_model(m1) #does not work with cox mixed effects regression, it needs to be done manually
@@ -29,19 +36,6 @@ check_model(m1) #does not work with cox mixed effects regression, it needs to be
 #Schoenfeld Residuals test - check proportional hazards assumptions
 test_ph <- cox.zph(m1)
 ggcoxzph(test_ph)
-
-#Check for linearity using martingale residuals - not working:( not meant for coxme I think
-res_mart <- residuals(m1, type = "martingale")
-ggplot(data = longev_data, aes(x = status, y = res_mart)) +
-  geom_point() +
-  geom_smooth(method = "loess") +
-  labs(title = "Martingale Residuals vs Covariate")
-
-#Plotting deviance residuals - not working:(
-res_dev <- residuals(m1, type = "deviance")
-plot(res_dev, ylab = "Deviance Residuals", main = "Outlier Detection")
-abline(h = 0, lty = 2)
-
 
 fit <- survfit(Surv(fly_lifespan, event=status) ~ treatment, data=longev_data) #fit for the purpose of making the figure
 

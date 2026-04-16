@@ -38,6 +38,7 @@ test_ph <- cox.zph(m1)
 ggcoxzph(test_ph)
 
 fit <- survfit(Surv(fly_lifespan, event=status) ~ treatment, data=longev_data) #fit for the purpose of making the figure
+fitbysex <- survfit(Surv(fly_lifespan, event=status) ~ treatment+sex, data=longev_data) #fit for the purpose of making the figure
 
 ggplot1 <- ggsurvplot(fit, size = 2, censor = FALSE, legend = c(.25,.50),legend.title = "Treatment",
                       legend.labs = c("Control","Selection"), ggtheme = theme(title = element_text(size=30), axis.title.x = element_text(size=30), axis.title.y = element_text(size=30),
@@ -48,6 +49,17 @@ ggplot1 <- ggsurvplot(fit, size = 2, censor = FALSE, legend = c(.25,.50),legend.
                       ))$plot
 
 ggplot1 + xlab("Age (Days)") + ylab("Proportion Alive")
+
+ggplot2 <- ggsurvplot(fitbysex, size = 1, censor = FALSE,legend.title = "",
+                      legend.labs = c("ControlFemale","ControlMale", "SelectionFemale", "SelectionMale"), ggtheme = theme(title = element_text(size=30), axis.title.x = element_text(size=30), axis.title.y = element_text(size=30),
+                                                                              legend.title = element_text(size=25), panel.background = element_rect(fill= FALSE),
+                                                                              axis.line = element_line(), plot.title = element_text(size=35, hjust = 0.5), 
+                                                                              legend.key.height = unit(1.3,'cm'),
+                                                                              
+                      ))$plot
+
+ggplot2 + xlab("Age (Days)") + ylab("Proportion Alive") + coord_cartesian(ylim = c(.95, 1))
+
 
 longev_data <- longev_data %>%
   dplyr::select(-specific)

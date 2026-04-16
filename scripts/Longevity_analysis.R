@@ -64,7 +64,7 @@ ggplot2 + xlab("Age (Days)") + ylab("Proportion Alive") + coord_cartesian(ylim =
 longev_data <- longev_data %>%
   dplyr::select(-specific)
 
-saveRDS(longev_data, "../data/clean_longev.rds")
+saveRDS(longev_data, "/data/clean_longev.rds")
 
 
 

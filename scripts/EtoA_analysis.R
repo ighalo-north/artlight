@@ -40,7 +40,7 @@ etoa_duration <- glmer(time ~ treatment*sex + (1|trt_lin) + (1|trt_lin_vial), da
 
 summary(etoa_duration)
 check_model(etoa_duration) 
-#Data points 284 and 283 are influential observations because the eclosed unusually late.
+#Data points 284 and 283 are influential observations because they eclosed unusually late.
 #Should still be included in analysis in my opinion.
 
 

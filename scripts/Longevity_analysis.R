@@ -38,11 +38,8 @@ check_model(m1) #does not work with cox mixed effects regression, it needs to be
 test_ph <- cox.zph(m1)
 ggcoxzph(test_ph)
 
-<<<<<<< HEAD
-=======
 fit <- survfit(Surv(fly_lifespan, event=status) ~ treatment, data=longev_data) #fit for the purpose of making the figure
 fitbysex <- survfit(Surv(fly_lifespan, event=status) ~ treatment+sex, data=longev_data) #fit for the purpose of making the figure
->>>>>>> 46f67324c7d48779443cb57b06357205510bc2f1
 
 #Inferential plots
 longev_estimates <- emmeans(m1, ~ sex + treatment, type = "response") 

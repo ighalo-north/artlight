@@ -211,7 +211,7 @@ summary(dt$day2)
 
 
 #light phase info
-dt[, phase := ifelse((t %% (24*3600)) < (12*3600), "L", "D")]
+dt[, phase := ifelse((t %% (24*3600)) < (12*3600), "D", "L")]
 
 summary_dt <- 
   rejoin(dt[,
@@ -235,11 +235,6 @@ summary_dt <- summary_dt |>
   mutate(monitor=as.factor(monitor))
 
 saveRDS(summary_dt, "../../data/clean_circ.rds")
-
-
-
-
-
 
 
 
@@ -374,7 +369,7 @@ That is a phase shift. For instance, if we want to
 
 pl <- ggetho(dt, aes(x=t, y=moving), 
             time_wrap = hours(24),
-            time_offset = hours(9)) + stat_pop_etho()
+            time_offset = hours(18)) + stat_pop_etho()
 pl
 
 '
@@ -388,9 +383,15 @@ To put the annotation in the background,
   add some transparency (alpha = 0.3). 
 We also remove the outline of the boxes
 '
+
+dt[, phase := ifelse(((t + 12*3600) %% (24*3600)) < (12*3600), "D", "L")]
+
 pl <- ggetho(dt, aes(x = t, y = moving, group = treatment, colour = treatment), time_wrap = 24*3600) + 
   stat_pop_etho(aes(fill = treatment), alpha = .5) + 
-  stat_ld_annotations() + 
+  stat_ld_annotations(
+    lights_off = 0,
+    lights_on = 12*3600
+  ) + 
   scale_color_manual(values = c("#C69214", "#6E6E6E"))+
   scale_fill_manual(values = c("#C69214", "#6E6E6E"))+
   coord_cartesian(ylim=c(0, 1))+

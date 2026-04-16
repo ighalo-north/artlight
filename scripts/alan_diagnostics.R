@@ -70,6 +70,24 @@ summary(gg1)
 
 mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation_factor/day) + (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze) + (1|Maze/Light_Side), data = alan, family=Gamma(link="inverse"))
 
+apr15 <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1|Generation:Treatment:Lineage) + (1|Maze), data = alan, family=Gamma(link="log"))
+
+diff_optims <- allFit(apr15, maxfun=4e5)
+#maxfun option sets the maximum number of iterations - 
+  #more can increase the likelihood of convergence, though I have had R freeze up sometimes if the value is too high
+'
+https://joshua-nugent.github.io/allFit/
+Do not be fooled! These are not “OK” fits! \
+We need to check for convergence flags. 
+Below, we’re looking for the result NULL - 
+meaning we have no convergence warnings in the fitted 
+model with that optimizer.
+'
+diff_optims_OK <- diff_optims[sapply(diff_optims, is, "merMod")]
+lapply(diff_optims_OK, function(x) x@optinfo$conv$lme4$messages)
+#component 1 means maxfun limit was reached
+
+
 #failed to converge; from BB on stackoverflow
   #the basic problem is that you have multiple 
   #observations in your data set of x per m, but they all have the same response value, so your x 

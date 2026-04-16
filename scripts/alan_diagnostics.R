@@ -41,10 +41,18 @@ lapply(diff_optims_OK, function(x) x@optinfo$conv$lme4$messages)
 
 
 
-tmbmodel <- glmmTMB(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1|Generation:Treatment:Lineage) + (1|Maze), data = alan, family = Gamma(link="log"), se = TRUE)
+tmbmodel <- glmmTMB(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1|Generation:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = alan, family = Gamma(link="log"), se = TRUE)
+
+plotResiduals(tmbmodel)
+
+#inferential plots for tmbmodel
 
 
-
+#trial id
+#wide to long
+#one row per fly
+#for each vial, create number of rows based on count in cell
+  #terminal vial ID
 
 
 

@@ -3,8 +3,9 @@ library(readxl)
 library(tidyverse)
 library(skimr)
 library(ggplot2)
+library(forcats)
 
-alan <- read_excel("../data/raw_alan_gen25.xlsx")
+alan <- read_excel("data/raw_alan_gen25.xlsx")
 sapply(alan,class)
 
 (alan #examine the structure of the data and check for problems
@@ -19,7 +20,15 @@ alan <- subset(alan, select = -c(start_time, end_time, Time_Elapsed))
 #how many generations
 generations_total <- (tail(na.omit(alan$Generation, n = 1)))[1]
 
-#fill blind column (BEFORE making it a factor)
+#factorize alan and break it into three levels
+alan$Generation_factor <- as.factor(alan$Generation)
+
+alan$Generation_split <- fct_collapse(alan$Generation_factor,
+             early = c(1, 2, 3, 4, 5, 6, 7, 8, 9),
+             middle = c(10, 11, 12, 13, 14, 15, 16),
+             late = c(17, 18, 19, 20, 21, 22, 23, 24, 25))
+
+#fill blind column (BEFORE makGeneration_factor#fill blind column (BEFORE making it a factor)
 alan$blind <- ifelse(alan$Generation <= 10, "no", alan$blind)
 
 #use tidyverse to change some char variables to factors
@@ -151,7 +160,7 @@ gg0 + filter(alan_sum, stringr::str_detect(TrtLin, "^S")) + scale_color_manual(v
 gg0 + alan_sum + facet_wrap(~Treatment,  nrow = 1) + scale_color_manual(values = mypalette, labels = c("S1", "S2", "S3", "S4", "C1", "C2", "C3", "C4")) 
 
 #Use the saveRDS function in R to save a clean (or clean-ish) version of your data
-saveRDS(alan, "../data/clean_alan_gen25.rds")
+saveRDS(alan, "data/clean_alan_gen25.rds")
 
 
 

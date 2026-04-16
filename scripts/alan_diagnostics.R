@@ -9,6 +9,7 @@ library(lme4)
 library(lmerTest)
 library(performance)
 library(glmmTMB)
+library(effects)
 
 options(contrasts=c("contr.sum", "contr.poly"))
 
@@ -45,7 +46,98 @@ tmbmodel <- glmmTMB(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1|Gen
 
 plotResiduals(tmbmodel)
 
+focal.predictors = c("Sex", "Treatment", "Generation", "time_of_day")
+Anova(tmbmodel, type = c("3"), test.statistic = c("Chisq"))
+Effect(focal.predictors, tmbmodel)
+
 #inferential plots for tmbmodel
+#all fixed effects
+alan_estimates <- emmeans(tmbmodel, ~ Sex + Treatment + Generation + time_of_day, type = "response") 
+alan_estimates
+plot(alan_estimates) + xlab("Estimated Lightscore")
+
+emmip(alan_estimates, Sex ~ Treatment, CIs = TRUE) +
+  ylab("Estimated Lightscore") +
+  xlab("Treatment") +
+  theme_bw()
+#sex
+alan_estimates <- emmeans(tmbmodel, ~ Sex, type = "response") 
+alan_estimates
+plot(alan_estimates) + xlab("Estimated Lightscore")
+
+emmip(alan_estimates, ~ Sex, CIs = TRUE) +
+  ylab("Estimated Lightscore") +
+  xlab("Sex") +
+  theme_bw()
+#treatment
+alan_estimates <- emmeans(tmbmodel, ~ Treatment, type = "response") 
+alan_estimates
+plot(alan_estimates) + xlab("Estimated Lightscore")
+
+emmip(alan_estimates, ~ Treatment, CIs = TRUE) +
+  ylab("Estimated Lightscore") +
+  xlab("Treatment") +
+  theme_bw()
+#time of day
+alan_estimates <- emmeans(tmbmodel, ~ time_of_day, type = "response") 
+alan_estimates
+plot(alan_estimates) + xlab("Estimated Lightscore")
+
+emmip(alan_estimates, ~time_of_day, CIs = TRUE) +
+  ylab("Estimated Lightscore") +
+  xlab("time of day") +
+  theme_bw()
+
+
+#Anova does not like Generation as a factor w 25 levels (understandable tbh)
+'tmbgenfactor <- glmmTMB(Lightscore ~ Generation_factor*Sex*Treatment + time_of_day + (1|Generation_factor:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = alan, family = Gamma(link="log"), se = TRUE)
+focal.predictors = c("Sex", "Treatment", "Generation_factor", "time_of_day")
+Anova(tmbgenfactor, type = c("3"), test.statistic = c("Chisq"))
+Effect(focal.predictors, tmbgenfactor)'
+
+#prefers split into early, middle, late
+tmbgensplit <- glmmTMB(Lightscore ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = alan, family = Gamma(link="log"), se = TRUE)
+focal.predictors = c("Sex", "Treatment", "Generation_split", "time_of_day")
+Anova(tmbgensplit, type = c("3"), test.statistic = c("Chisq"))
+Effect(focal.predictors, tmbgensplit)
+
+#generation
+alan_estimates <- emmeans(tmbgensplit, ~ Generation_split, type = "response") 
+alan_estimates
+plot(alan_estimates) + xlab("Estimated Lightscore")
+
+emmip(alan_estimates, ~Generation_split, CIs = TRUE) +
+  ylab("Estimated Lightscore") +
+  xlab("Generation") +
+  theme_bw()
+
+alan_estimates <- emmeans(tmbgensplit, ~ Generation_split*Treatment, type = "response") 
+alan_estimates
+plot(alan_estimates) + xlab("Estimated Lightscore")
+
+emmip(alan_estimates, ~ Generation_split*Treatment, CIs = TRUE) +
+  ylab("Estimated Lightscore") +
+  xlab("Generation") +
+  theme_bw()
+alan_estimates <- emmeans(tmbgensplit, ~ Generation_split*Treatment*Sex, type = "response") 
+alan_estimates
+plot(alan_estimates) + xlab("Estimated Lightscore")
+emmip(alan_estimates, ~ Generation_split*Treatment*Sex, CIs = TRUE) +
+  ylab("Estimated Lightscore") +
+  xlab("Generation") +
+  theme_bw()
+alan_estimates <- emmeans(tmbgensplit, ~ Generation_split*Treatment*Sex*time_of_day, type = "response") 
+alan_estimates
+plot(alan_estimates) + xlab("Estimated Lightscore")
+emmip(alan_estimates, ~ Generation_split*Treatment*Sex*time_of_day, CIs = TRUE) +
+  ylab("Estimated Lightscore") +
+  xlab("Generation") +
+  theme_bw()
+
+'Generation$split
+early 1, 2, 3, 4, 5, 6, 7, 8, 9
+middle 10, 11, 12, 13, 14, 15, 16
+late 17, 18, 19, 20, 21, 22, 23, 24, 25'
 
 
 #trial id

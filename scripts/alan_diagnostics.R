@@ -179,11 +179,12 @@ CAUTION: above model will take forever to converge so Im still not sure if it wo
 '
 
 #RD: trial within each lineage and generation will have to be a random effect as well
-flytmb <- glmmTMB(vial_id ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"), se = TRUE)
+#flytmb <- glmmTMB(vial_id ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|rep_trial_id)+ (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"), se = TRUE)
+flytmb <- glmmTMB(vial_id ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage:rep_trial_id) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"), se = TRUE)
 
 #flytmb <- glmmTMB(Lightscore ~ Generation_split*Sex*Treatment + time_of_day/trial_id + (1|Generation_split:Treatment:Lineage:) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"), se = TRUE)
 
-#trial_id 1234 by lineage
+#rep_trial_id 1234 by lineage
 #trial_id unique to every single maze
 #ask ben
 
@@ -194,62 +195,32 @@ focal.predictors = c("Sex", "Treatment", "Generation_split", "time_of_day")
 Anova(flytmb, type = c("3"), test.statistic = c("Chisq"))
 Effect(focal.predictors, flytmb)
 
-#inferential plots
-#all fixed effects at individual level
+#inferential plots, all fixed effects at individual level---- 
 alan_estimates <- emmeans(flytmb, ~ Generation_split|Treatment*Sex*time_of_day, type = "response") 
 alan_estimates
 plot(alan_estimates) + xlab("Estimated VIAL ID")
 
-alan_estimates <- emmeans(flytmb, ~ Generation_split|Treatment*Sex*time_of_day, type = "response") 
-
-emmip(alan_estimates, ~Sex ~ Treatment ~ time_of_day, CIs = TRUE, as.table = FALSE) +
-  ylab("Estimated VIAL ID") +
-  xlab("Treatment") +
-  theme_bw()
-emmip(alan_estimates, ~Sex*Treatment*time_of_day, CIs = TRUE, as.table = FALSE) +
+emmip(alan_estimates, ~Generation_split | Treatment*Sex, CIs = TRUE, as.table = FALSE) +
   ylab("Estimated VIAL ID") +
   xlab("Treatment") +
   theme_bw()
 
-emmip(alan_estimates, Treatment ~ Generation_split| time_of_day*Sex, CIs = TRUE, as.table = FALSE) +
-  ylab("Estimated VIAL ID") +
-  xlab("Treatment") +
-  theme_bw()
-emmip(alan_estimates, Sex ~ Treatment, CIs = TRUE, as.table = FALSE) +
+emmip(alan_estimates, ~Treatment ~ Generation_split | time_of_day + Sex, CIs = TRUE, as.table = FALSE) +
   ylab("Estimated VIAL ID") +
   xlab("Treatment") +
   theme_bw()
 
-#individual level
-alan_estimates <- emmeans(flytmb, ~ Generation_split, type = "response") 
+#slightly diff inferential plots
+alan_estimates <- emmeans(flytmb, ~ Generation_split*Treatment*Sex + time_of_day, type = "response") 
 alan_estimates
 plot(alan_estimates) + xlab("Estimated VIAL ID")
 
-emmip(alan_estimates, ~Generation_split, CIs = TRUE) +
+emmip(alan_estimates, ~ Generation_split | Treatment*Sex , CIs = TRUE) +
   ylab("Estimated VIAL ID") +
   xlab("Generation") +
   theme_bw()
 
-alan_estimates <- emmeans(flytmb, ~ Generation_split*Treatment, type = "response") 
-alan_estimates
-plot(alan_estimates) + xlab("Estimated VIAL ID")
-
-emmip(alan_estimates, ~ Generation_split*Treatment, CIs = TRUE) +
-  ylab("Estimated VIAL ID") +
-  xlab("Generation") +
-  theme_bw()
-alan_estimates <- emmeans(flytmb, ~ Generation_split*Treatment*Sex, type = "response") 
-alan_estimates
-plot(alan_estimates) + xlab("Estimated VIAL ID")
-emmip(alan_estimates, ~ Generation_split*Treatment*Sex, CIs = TRUE, col = rep(c("red", "blue"), length.out = 20)) +
-  ylab("Estimated VIAL ID") +
-  xlab("Generation") +
-  scale_colour_manual(values = c("red", "blue")) +
-  theme_bw()
-alan_estimates <- emmeans(flytmb, ~ Generation_split*Treatment*Sex*time_of_day, type = "response") 
-alan_estimates
-plot(alan_estimates) + xlab("Estimated VIAL ID")
-emmip(alan_estimates, ~ Generation_split|Treatment*Sex*time_of_day, CIs = TRUE, as.table = FALSE) +
+emmip(alan_estimates, ~ Generation_split | Treatment, CIs = TRUE) +
   ylab("Estimated VIAL ID") +
   xlab("Generation") +
   theme_bw()

@@ -138,7 +138,11 @@ D 1
 
 alan$TrtLin <- factor(alan$TrtLin, levels = c("S1", "S2", "S3", "S4", "C1", "C2", "C3", "C4"))
 
-
+#create a repeating trial id (1 trial is 1 maze, 4 trials run consecutively (most of the time))
+alan <- alan |>
+  group_by(Date) |>
+  mutate(rep_trial_id = as.integer(factor(Maze))) |>
+  ungroup()
 
 
 colorsA <- c("red", "purple", "orange", "darkred")

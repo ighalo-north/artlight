@@ -161,7 +161,7 @@ late 17, 18, 19, 20, 21, 22, 23, 24, 25'
 
 
 
-
+#pre april 15-----
 #small model----
 linalan_null <- lm(Lightscore ~ 1, data = alan) #null hypothesis
 linalanbasic <- lm(Lightscore~TrtLin + Generation, data=alan)

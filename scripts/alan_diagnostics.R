@@ -10,6 +10,7 @@ library(lmerTest)
 library(performance)
 library(glmmTMB)
 library(effects)
+library(DHARMa)
 
 options(contrasts=c("contr.sum", "contr.poly"))
 
@@ -97,6 +98,7 @@ Effect(focal.predictors, tmbgenfactor)'
 
 #prefers split into early, middle, late
 tmbgensplit <- glmmTMB(Lightscore ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = alan, family = Gamma(link="log"), se = TRUE)
+plotResiduals(tmbgensplit)
 focal.predictors = c("Sex", "Treatment", "Generation_split", "time_of_day")
 Anova(tmbgensplit, type = c("3"), test.statistic = c("Chisq"))
 Effect(focal.predictors, tmbgensplit)
@@ -122,19 +124,27 @@ emmip(alan_estimates, ~ Generation_split*Treatment, CIs = TRUE) +
 alan_estimates <- emmeans(tmbgensplit, ~ Generation_split*Treatment*Sex, type = "response") 
 alan_estimates
 plot(alan_estimates) + xlab("Estimated Lightscore")
-emmip(alan_estimates, ~ Generation_split*Treatment*Sex, CIs = TRUE) +
+emmip(alan_estimates, ~ Generation_split*Treatment*Sex, CIs = TRUE, col = rep(c("red", "blue"), length.out = 20)) +
   ylab("Estimated Lightscore") +
   xlab("Generation") +
+  scale_colour_manual(values = c("red", "blue")) +
   theme_bw()
 alan_estimates <- emmeans(tmbgensplit, ~ Generation_split*Treatment*Sex*time_of_day, type = "response") 
 alan_estimates
 plot(alan_estimates) + xlab("Estimated Lightscore")
-emmip(alan_estimates, ~ Generation_split*Treatment*Sex*time_of_day, CIs = TRUE) +
+emmip(alan_estimates, ~ Generation_split|Treatment*Sex*time_of_day, CIs = TRUE, as.table = FALSE) +
   ylab("Estimated Lightscore") +
   xlab("Generation") +
   theme_bw()
 
 'Generation$split
+
+Q1 1, 2, 3, 4, 5 - 2 measurements of C
+Q2 6, 7, 8, 9, 10 - 1 meas of C
+Q3 11, 12, 13, 14, 15 - 1 meas of C
+Q4 16, 17, 18, 19, 20 - 1 meas of C
+Q5 21, 22, 23, 24, 25 - 1 meas of C
+
 early 1, 2, 3, 4, 5, 6, 7, 8, 9
 middle 10, 11, 12, 13, 14, 15, 16
 late 17, 18, 19, 20, 21, 22, 23, 24, 25'
@@ -154,6 +164,7 @@ indialan <- alan |>
     names_to="vial_id",
     values_to="count"
   )
+indialan$vial_id <- as.integer(indialan$vial_id)
 
 
 #this dataframe is 1 row per fly
@@ -163,26 +174,85 @@ indialanuncount <- indialan |>
   uncount(count)
 
 #model at individual fly----
-flyglmer <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1|Generation:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"))
-flytmb <- glmmTMB(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1|Generation:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"), se = TRUE)
+'flyglmer <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1|Generation:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"))
+CAUTION: above model will take forever to converge so Im still not sure if it works or not
+'
 
-plotResiduals(flytmb) #what is happening in the second graph lol
+#RD: trial within each lineage and generation will have to be a random effect as well
+flytmb <- glmmTMB(vial_id ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"), se = TRUE)
+
+#flytmb <- glmmTMB(Lightscore ~ Generation_split*Sex*Treatment + time_of_day/trial_id + (1|Generation_split:Treatment:Lineage:) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"), se = TRUE)
+
+#trial_id 1234 by lineage
+#trial_id unique to every single maze
+#ask ben
+
+plot(simulateResiduals(flytmb), rank = T) #yikes + oh no
+
 allFit(flytmb)
-focal.predictors = c("Sex", "Treatment", "Generation", "time_of_day")
+focal.predictors = c("Sex", "Treatment", "Generation_split", "time_of_day")
 Anova(flytmb, type = c("3"), test.statistic = c("Chisq"))
 Effect(focal.predictors, flytmb)
 
 #inferential plots
-#all fixed effects
-alan_estimates <- emmeans(flytmb, ~ Sex + Treatment + Generation + time_of_day, type = "response") 
+#all fixed effects at individual level
+alan_estimates <- emmeans(flytmb, ~ Generation_split|Treatment*Sex*time_of_day, type = "response") 
 alan_estimates
-plot(alan_estimates) + xlab("Estimated Lightscore")
+plot(alan_estimates) + xlab("Estimated VIAL ID")
 
-emmip(alan_estimates, Sex ~ Treatment, CIs = TRUE) +
-  ylab("Estimated Lightscore") +
+alan_estimates <- emmeans(flytmb, ~ Generation_split|Treatment*Sex*time_of_day, type = "response") 
+
+emmip(alan_estimates, ~Sex ~ Treatment ~ time_of_day, CIs = TRUE, as.table = FALSE) +
+  ylab("Estimated VIAL ID") +
+  xlab("Treatment") +
+  theme_bw()
+emmip(alan_estimates, ~Sex*Treatment*time_of_day, CIs = TRUE, as.table = FALSE) +
+  ylab("Estimated VIAL ID") +
   xlab("Treatment") +
   theme_bw()
 
+emmip(alan_estimates, Treatment ~ Generation_split| time_of_day*Sex, CIs = TRUE, as.table = FALSE) +
+  ylab("Estimated VIAL ID") +
+  xlab("Treatment") +
+  theme_bw()
+emmip(alan_estimates, Sex ~ Treatment, CIs = TRUE, as.table = FALSE) +
+  ylab("Estimated VIAL ID") +
+  xlab("Treatment") +
+  theme_bw()
+
+#individual level
+alan_estimates <- emmeans(flytmb, ~ Generation_split, type = "response") 
+alan_estimates
+plot(alan_estimates) + xlab("Estimated VIAL ID")
+
+emmip(alan_estimates, ~Generation_split, CIs = TRUE) +
+  ylab("Estimated VIAL ID") +
+  xlab("Generation") +
+  theme_bw()
+
+alan_estimates <- emmeans(flytmb, ~ Generation_split*Treatment, type = "response") 
+alan_estimates
+plot(alan_estimates) + xlab("Estimated VIAL ID")
+
+emmip(alan_estimates, ~ Generation_split*Treatment, CIs = TRUE) +
+  ylab("Estimated VIAL ID") +
+  xlab("Generation") +
+  theme_bw()
+alan_estimates <- emmeans(flytmb, ~ Generation_split*Treatment*Sex, type = "response") 
+alan_estimates
+plot(alan_estimates) + xlab("Estimated VIAL ID")
+emmip(alan_estimates, ~ Generation_split*Treatment*Sex, CIs = TRUE, col = rep(c("red", "blue"), length.out = 20)) +
+  ylab("Estimated VIAL ID") +
+  xlab("Generation") +
+  scale_colour_manual(values = c("red", "blue")) +
+  theme_bw()
+alan_estimates <- emmeans(flytmb, ~ Generation_split*Treatment*Sex*time_of_day, type = "response") 
+alan_estimates
+plot(alan_estimates) + xlab("Estimated VIAL ID")
+emmip(alan_estimates, ~ Generation_split|Treatment*Sex*time_of_day, CIs = TRUE, as.table = FALSE) +
+  ylab("Estimated VIAL ID") +
+  xlab("Generation") +
+  theme_bw()
 
 
 

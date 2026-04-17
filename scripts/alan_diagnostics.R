@@ -146,7 +146,42 @@ late 17, 18, 19, 20, 21, 22, 23, 24, 25'
 #for each vial, create number of rows based on count in cell
   #terminal vial ID
 
+#this dataframe is 1 row per terminal vial
+indialan <- alan |>
+  mutate(trial_id = row_number()) |>
+  pivot_longer(
+    cols=11:26,
+    names_to="vial_id",
+    values_to="count"
+  )
 
+
+#this dataframe is 1 row per fly
+  #39,645 flies finished the maze that's crazy
+indialanuncount <- indialan |>
+  mutate(count = replace_na(count, 0)) |>
+  uncount(count)
+
+#model at individual fly----
+flyglmer <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1|Generation:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"))
+flytmb <- glmmTMB(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1|Generation:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"), se = TRUE)
+
+plotResiduals(flytmb) #what is happening in the second graph lol
+allFit(flytmb)
+focal.predictors = c("Sex", "Treatment", "Generation", "time_of_day")
+Anova(flytmb, type = c("3"), test.statistic = c("Chisq"))
+Effect(focal.predictors, flytmb)
+
+#inferential plots
+#all fixed effects
+alan_estimates <- emmeans(flytmb, ~ Sex + Treatment + Generation + time_of_day, type = "response") 
+alan_estimates
+plot(alan_estimates) + xlab("Estimated Lightscore")
+
+emmip(alan_estimates, Sex ~ Treatment, CIs = TRUE) +
+  ylab("Estimated Lightscore") +
+  xlab("Treatment") +
+  theme_bw()
 
 
 

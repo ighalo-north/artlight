@@ -11,40 +11,55 @@ library(car)
 mate_data <- (read_excel("data/Mate choice FINAL.xlsx", sheet=2)
                   |> clean_names()
                   |> dplyr::select(day,arena,lineage_pair,s_male_mated)
+                  |> mutate(across(all_of(c("day","arena","lineage_pair")), as.factor))
 )
-
-#1 indicated the selection male mated, 0 indicates the control male mated
 
 summary(mate_data)
 
-table(mate_data$s_male_mated) 
-table(mate_data$s_male_mated, mate_data$s_male_mated, useNA = "ifany")
+with(mate_data, 
+     table(s_male_mated))
 
-addmargins(
-  prop.table(
-    table(mate_data$lineage_pair, mate_data$s_male_mated), 2), 1)
+with(mate_data, 
+     table(s_male_mated, day))
 
-addmargins(
-  prop.table(
-    table(mate_data$day, mate_data$s_male_mated), 2), 1)
+with(mate_data, 
+     table(s_male_mated, lineage_pair))
+
+mate1 <- glmer(data=mate_data, s_male_mated ~ 1 + (1|day/lineage_pair), family = "binomial")
+#Is Singular, removed day
+
+mate2 <- glmer(data=mate_data, s_male_mated ~ 1 + (1|lineage_pair), family = "binomial")
+#is singular, potentially not enough variation between lineages, switched lineage pair to fixed effect
+
+mate3 <- glm(data=mate_data, s_male_mated ~ 1 + lineage_pair, family = "binomial")
+
+check_model(mate3)
+summary(mate3)
+
+#Inferential plots
+#By lineage
+mate_estimates_lineage <- emmeans(mate3, ~ lineage_pair, type = "response") 
+mate_estimates_lineage
+plot(mate_estimates_lineage) + xlab("Estimated Mating Rate (Selected Male)") +
+  geom_vline(xintercept = 0.5, linetype = "dashed", color = "red")
+
+#Overall
+mate_estimates <- emmeans(mate3, ~ 1, type = "response") 
+mate_estimates
+plot(mate_estimates) + xlab("Estimated Mating Rate (Selected Male)") +
+ geom_vline(xintercept = 0.5, linetype = "dashed", color = "red")
 
 
-fit.clr <- clogit(s_male_mated ~ day + lineage_pair,
-                  data = mate_data)
+#Visualize the emmeans with ggplot
+emm_df <- as.data.frame(mate_estimates)
 
-summary(fit.clr)
-
-
-model_mixed <- mclogit(cbind(s_male_mated, suburb) ~ day, 
-                       random = ~1|lineage_pair, 
-                       data = mate_data)
-
-
-
-
-mate <- glmer(data=mate_data, success ~ treatment + day + (1|lineage_pair), family = "binomial")
-
-check_model(mate)
-summary(mate)
+ggplot(emm_df, aes(x = "", y = prob)) +
+  geom_point(size = 4) +
+  geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), width = 0.05) +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "red") +
+  ylim(0, 1) +
+  labs(y = "Probability of Selected Male Mating",
+       x = "") +
+  theme_minimal()
 
 

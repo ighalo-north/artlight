@@ -51,6 +51,7 @@ print(ggplot(etoa_data, aes(x = treatment, y = eclosed))
       + ylim(0,1)
       + ylab("Proportion of Flies Eclosed") 
       + xlab("Lineage")
+      + scale_x_discrete(labels = c("C" = "Control", "S" = "Selection"))
 )
 
 
@@ -98,6 +99,8 @@ print(ggplot(duration_data, aes(y=time, x=treatment:sex, fill = sex))
       + theme_bw()
       + ylab("Time of Eclosion") 
       + xlab("Lineage")
+      + scale_x_discrete(labels = c("C:F" = "Control Females", "C:M" = "Control Males", "S:F" = "Selection Females","S:M" = "Selection Males"))
 )
 
 Anova(etoa_duration)
+

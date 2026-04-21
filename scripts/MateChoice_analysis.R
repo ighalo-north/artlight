@@ -49,6 +49,7 @@ mate_estimates
 plot(mate_estimates) + xlab("Estimated Mating Rate (Selected Male)") +
  geom_vline(xintercept = 0.5, linetype = "dashed", color = "red")
 
+test(mate_estimates)
 
 #Visualize the emmeans with ggplot
 emm_df <- as.data.frame(mate_estimates)
@@ -61,5 +62,4 @@ ggplot(emm_df, aes(x = "", y = prob)) +
   labs(y = "Probability of Selected Male Mating",
        x = "") +
   theme_minimal()
-
 

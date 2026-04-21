@@ -82,6 +82,38 @@ emmip(alan_estimates, ~ Generation_split*Treatment, CIs = TRUE) +
   xlab("Generation") +
   theme_bw()
 
+alan_estimates <- emmeans(tmbgensplit, ~ Treatment | Generation_split, type = "response") 
+alan_estimates
+plot(alan_estimates) + xlab("Estimated Lightscore")
+emmip(alan_estimates, ~ Generation_split*Treatment, CIs = TRUE) +
+ylab("Estimated Lightscore") +
+xlab("Generation") +
+theme_bw()
+alan_estimates <- emmeans(tmbgensplit, ~ Generation_split | Treatment, type = "response") 
+alan_estimates
+plot(alan_estimates) + xlab("Estimated Lightscore")
+emmip(alan_estimates, ~ Treatment |Generation_split, CIs = TRUE) +
+  ylab("Estimated Lightscore") +
+  xlab("Generation") +
+  theme_bw()
+alan_estimates <- emmeans(tmbgensplit, ~ Generation_split | Treatment*Sex, type = "response") 
+alan_estimates
+plot(alan_estimates) + xlab("Estimated Lightscore")
+emmip(alan_estimates, ~ Treatment*Sex |Generation_split, CIs = TRUE) +
+  ylab("Estimated Lightscore") +
+  xlab("Generation") +
+  theme_bw()
+emmip(alan_estimates, ~ Treatment*Sex |Generation_split, CIs = TRUE) +
+  ylab("Estimated Lightscore") +
+  xlab("Generation") +
+  theme_bw()
+
+emmeans(tmbgensplit, ~ Treatment | Generation_split) |>
+pairs()
+
+emmeans(tmbgensplit, ~ Sex*Treatment | Generation_split) |>
+pairs()
+
 alan_estimates <- emmeans(tmbgensplit, ~ Generation_split*Treatment*Sex*time_of_day, type = "response") 
 alan_estimates
 plot(alan_estimates) + xlab("Estimated Lightscore")
@@ -127,10 +159,7 @@ Q3 11, 12, 13, 14, 15 - 1 meas of C
 Q4 16, 17, 18, 19, 20 - 1 meas of C
 Q5 21, 22, 23, 24, 25 - 1 meas of C'
 
-flytmb <- glmmTMB::glmmTMB(vial_id ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"), se = TRUE)
-
-#binomial distribution (ystar, 16-ystar)
-
+#binomial distribution 
 flytmb <- glmmTMB::glmmTMB(cbind(vial_id, 16-vial_id) ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = binomial(link="logit"), se = TRUE)
 
 

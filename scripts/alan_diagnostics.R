@@ -130,10 +130,8 @@ Q5 21, 22, 23, 24, 25 - 1 meas of C'
 flytmb <- glmmTMB::glmmTMB(vial_id ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"), se = TRUE)
 
 #binomial distribution (ystar, 16-ystar)
-indialanuncount$vial_idstar <- indialanuncount$vial_id - 1
 
-
-flytmb <- glmmTMB::glmmTMB(cbind(vial_id, 16-vial_idstar) ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = binomial(link="logit"), se = TRUE)
+flytmb <- glmmTMB::glmmTMB(cbind(vial_id, 16-vial_id) ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = binomial(link="logit"), se = TRUE)
 
 
 check_model(flytmb, size_dot = 1.2)

@@ -1,12 +1,13 @@
 library(DHARMa)
-library(mclogit)
 library(dplyr)
 library(tidyr)
 library(janitor)
 library(readxl)
-library(survival)
 library(car)
-
+library(lme4)
+library(emmeans)
+library(performance)
+library(ggplot2)
 
 mate_data <- (read_excel("data/Mate choice FINAL.xlsx", sheet=2)
                   |> clean_names()

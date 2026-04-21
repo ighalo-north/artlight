@@ -11,7 +11,7 @@ library(lmerTest)
 
 options(contrasts=c("contr.sum", "contr.poly"))
 
-circ <- readRDS("../data/clean_circ.rds")
+circ <- readRDS("data/clean_circ.rds")
 
 
 '

@@ -23,12 +23,6 @@ generations_total <- (tail(na.omit(alan$Generation, n = 1)))[1]
 #factorize alan and break it into three levels
 alan$Generation_factor <- as.factor(alan$Generation)
 
-'
-alan$Generation_split <- fct_collapse(alan$Generation_factor,
-             early = c(1, 2, 3, 4, 5, 6, 7, 8, 9),
-             middle = c(10, 11, 12, 13, 14, 15, 16),
-             late = c(17, 18, 19, 20, 21, 22, 23, 24, 25))
-'
 alan$Generation_split <- fct_collapse(alan$Generation_factor,
                                       Q1 = c(1, 2, 3, 4, 5),
                                       Q2 = c(6, 7, 8, 9, 10),
@@ -94,8 +88,6 @@ alan$Light_Side <- ifelse(alan$Maze %in% c("A", "C"), "L", "R")
   |> mutate(across(c(Light_Side, day), as.factor)))
 
 #change Maze_Order to a position for each maze
-
-
 alan <- alan %>%
   mutate(
     maze_position = case_when(
@@ -116,25 +108,6 @@ alan <- alan %>%
   )
 alan <- alan |> 
   mutate(maze_position = as.factor(maze_position))
-
-
-'
-if ABCD and A: 1
-if ABCD and B: 2
-if ABCD and C: 3
-if ABCD and D: 4
-
-if CDAB A 3
-B 4
-C 1
-D 2
-
-DBCA A 4
-B 2
-C 3
-D 1
-
-'
 
 alan$TrtLin <- factor(alan$TrtLin, levels = c("S1", "S2", "S3", "S4", "C1", "C2", "C3", "C4"))
 

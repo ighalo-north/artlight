@@ -68,27 +68,23 @@ emmip(alan_estimates, ~time_of_day, CIs = TRUE) +
 
 
 #population model with generation collapsed----
+'Generation$split
+
+Q1 1, 2, 3, 4, 5 
+Q2 6, 7, 8, 9, 10 
+Q3 11, 12, 13, 14, 15 
+Q4 16, 17, 18, 19, 20 
+Q5 21, 22, 23, 24, 25'
 tmbgensplit <- glmmTMB(Lightscore ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = alan, family = Gamma(link="log"), se = TRUE)
 plotResiduals(tmbgensplit)
 focal.predictors = c("Sex", "Treatment", "Generation_split", "time_of_day")
 Anova(tmbgensplit, type = c("3"), test.statistic = c("Chisq"))
 Effect(focal.predictors, tmbgensplit)
 
-alan_estimates <- emmeans(tmbgensplit, ~ Generation_split*Treatment, type = "response") 
-alan_estimates
-plot(alan_estimates) + xlab("Estimated Lightscore")
-emmip(alan_estimates, ~ Generation_split*Treatment, CIs = TRUE) +
-  ylab("Estimated Lightscore") +
-  xlab("Generation") +
-  theme_bw()
-
 alan_estimates <- emmeans(tmbgensplit, ~ Treatment | Generation_split, type = "response") 
 alan_estimates
 plot(alan_estimates) + xlab("Estimated Lightscore")
-emmip(alan_estimates, ~ Generation_split*Treatment, CIs = TRUE) +
-ylab("Estimated Lightscore") +
-xlab("Generation") +
-theme_bw()
+
 alan_estimates <- emmeans(tmbgensplit, ~ Generation_split | Treatment, type = "response") 
 alan_estimates
 plot(alan_estimates) + xlab("Estimated Lightscore")
@@ -99,14 +95,7 @@ emmip(alan_estimates, ~ Treatment |Generation_split, CIs = TRUE) +
 alan_estimates <- emmeans(tmbgensplit, ~ Generation_split | Treatment*Sex, type = "response") 
 alan_estimates
 plot(alan_estimates) + xlab("Estimated Lightscore")
-emmip(alan_estimates, ~ Treatment*Sex |Generation_split, CIs = TRUE) +
-  ylab("Estimated Lightscore") +
-  xlab("Generation") +
-  theme_bw()
-emmip(alan_estimates, ~ Treatment*Sex |Generation_split, CIs = TRUE) +
-  ylab("Estimated Lightscore") +
-  xlab("Generation") +
-  theme_bw()
+
 
 emmeans(tmbgensplit, ~ Treatment | Generation_split) |>
 pairs()
@@ -114,18 +103,10 @@ pairs()
 emmeans(tmbgensplit, ~ Sex*Treatment | Generation_split) |>
 pairs()
 
-alan_estimates <- emmeans(tmbgensplit, ~ Generation_split*Treatment*Sex*time_of_day, type = "response") 
-alan_estimates
-plot(alan_estimates) + xlab("Estimated Lightscore")
-emmip(alan_estimates, ~ Generation_split|Treatment*Sex*time_of_day, CIs = TRUE, as.table = FALSE) +
-  ylab("Estimated Lightscore") +
-  xlab("Generation") +
-  theme_bw()
-
 alan_estimates <- emmeans(tmbgensplit, ~ Sex, type = "response") 
 alan_estimates
 plot(alan_estimates) + xlab("Estimated Lightscore")
-emmip(alan_estimates, ~ Sex ~ Treatment, CIs = TRUE, as.table = FALSE) +
+emmip(alan_estimates, ~ Sex, CIs = TRUE, as.table = FALSE) +
   ylab("Estimated Lightscore") +
   xlab("Generation") +
   theme_bw()
@@ -151,38 +132,28 @@ indialanuncount <- indialan |>
 #individual fly level model----
 #####FUTURE DIRECTIONS
 
-'Generation$split
-
-Q1 1, 2, 3, 4, 5 - 2 measurements of C
-Q2 6, 7, 8, 9, 10 - 1 meas of C
-Q3 11, 12, 13, 14, 15 - 1 meas of C
-Q4 16, 17, 18, 19, 20 - 1 meas of C
-Q5 21, 22, 23, 24, 25 - 1 meas of C'
-
-#binomial distribution 
-flytmb <- glmmTMB::glmmTMB(cbind(vial_id, 16-vial_id) ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = binomial(link="logit"), se = TRUE)
+flytmb <- glmmTMB(cbind(vial_id, 16-vial_id) ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = binomial(link="logit"), se = TRUE)
 
 
-check_model(flytmb, size_dot = 1.2)
-plot(simulateResiduals(flytmb), rank = T) #yikes + oh no
+plot(simulateResiduals(flytmb), rank = T)
 
-check_predictions(flytmb, size_dot = 1.2)
-check_heteroskedasticity(flytmb, size_dot = 1.2)
+check_predictions(flytmb)
 plot(check_residuals(flytmb, size_dot = 1.2))
-simulateResiduals(flytmb)
+
 check_collinearity(flytmb, size_dot = 1.2)
-check_outliers(flytmb, size_dot = 1.2)
 binned_residuals(flytmb, size_dot = 1.2)
-check_overdispersion(flytmb, size_dot = 1.2)
+check_overdispersion(flytmb)
 
 focal.predictors = c("Sex", "Treatment", "Generation_split", "time_of_day")
+
 Anova(flytmb, type = c("3"), test.statistic = c("Chisq"))
 Effect(focal.predictors, flytmb)
 
+
 #inferential plots, all fixed effects at individual level---- 
+#model doesn't fit, so these plots aren't really relevant yet
 alan_estimates <- emmeans(flytmb, ~ Generation_split|Treatment*Sex*time_of_day, type = "response") 
 alan_estimates
-plot(alan_estimates) + xlab("Estimated VIAL ID")
 
 emmip(alan_estimates, ~Generation_split | Treatment*Sex, CIs = TRUE, as.table = FALSE) +
   ylab("Estimated VIAL ID") +
@@ -192,16 +163,6 @@ emmip(alan_estimates, ~Generation_split | Treatment*Sex, CIs = TRUE, as.table = 
 emmip(alan_estimates, ~Treatment ~ Generation_split | time_of_day + Sex, CIs = TRUE, as.table = FALSE) +
   ylab("Estimated VIAL ID") +
   xlab("Treatment") +
-  theme_bw()
-
-#slightly diff inferential plots
-alan_estimates <- emmeans(flytmb, ~ Generation_split*Treatment*Sex + time_of_day, type = "response") 
-alan_estimates
-plot(alan_estimates) + xlab("Estimated VIAL ID")
-
-emmip(alan_estimates, ~ Generation_split | Treatment*Sex , CIs = TRUE) +
-  ylab("Estimated VIAL ID") +
-  xlab("Generation") +
   theme_bw()
 
 emmip(alan_estimates, ~ Generation_split | Treatment, CIs = TRUE) +

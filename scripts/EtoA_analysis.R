@@ -19,6 +19,9 @@ etoa_data <- transform(etoa_data,
                     trt_lin_vial = interaction(treatment, lineage, vial))
 
 etoa_eclosion <- glmer(eclosed ~ treatment + (1|trt_lin) + (1|trt_lin_vial), family = "binomial", data=etoa_data)
+#leads to a singular fit, omitted (1|trt_lin)
+
+etoa_eclosion <- glmer(eclosed ~ treatment + (1|trt_lin_vial), family = "binomial", data=etoa_data)
 
 summary(etoa_eclosion)
 check_model(etoa_eclosion) 

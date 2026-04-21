@@ -2,47 +2,33 @@
 
 final project for bio708: basis of animal attraction to artificial light at night
 
-5 datasets in the `data` folder
+Keren Ighalo and Jack Rosenbaum
 
-1.  artificial selection behavioural data `raw_alan_gen25.xlsx`
-2.  egg to adult survival and developmental duration `etoadd_dataflies.xlsx`
-    1.  wide format: `EtoA_data.xslx`
-3.  longevity `Longevity_Final.xlsx`
-4.  mate choice `Mate choice FINAL.xlsx`
-5.  circadian rhythm `circadian rhythm data` (folder w files for each monitor)
+Datasets in the `data` folder:
 
-Next Steps:
+Artificial Selection Data
+1.  `raw_alan_gen25.xlsx`: artificial selection behavioural data 
+2.  `clean_alan_gen25.rds`: artificial selection behavioural data after cleaning
 
--   import and tidy the data
+Egg to Adult Survival + Developmental Duration
+1.  egg to adult survival and developmental duration `etoadd_dataflies.xlsx`
+2.  wide format: `EtoA_data.xslx`
+3.  cleaned data ready for analysis: `etoa_data_clean.rds`
 
-    -   convert wide formats to long formats
+Longevity
+1.  longevity raw data `Longevity_Finalold.xlsx`
+2.  longevity reformatted data `Longevity_Final.xlsx`
+3.  cleaned data for analysis: `clean_longev.rds`
 
-    -   reorder categorical variables as needed
+Mate Choice
+1. mate choice raw data `Mate choice FINAL.xlsx`
+2. Reformatted data. Each row corresponds to a unique fly: `clean_matechoice.rds`
+    - Did not end up using for final analysis
 
--   create generic (residuals vs fitted) diagnostics plots for each dataset
+Circadian rhythm (omitted from project)
+1. `circadian rhythm data` (folder w files for each monitor)
+2. Cleaned data set with data from all monitors: `clean_circ.rds`
 
-    -   look at residuals, not fits
 
--   create inference plot based on longevity data and egg-to-adult survival
 
-prez plans
 
--   initial boxplot of treatment \* sex on lightscore
-
--   vid of maze
-
--   image of dataset (instead of listing vars)
-
--   explain creation of novel vars or columns (how and why with pics)
-
--   challenges in defining boundaries/cutoffs
-
--   next steps slide + questions for ben and jonathan slide
-
--   code excerpts for the model (var names are readable, makes more sense than making DAG diagrams
-
--   results may be consistent with other literature even with nonsignificance of my data and significance of their data
-
-    -   more relevant for writeup
-
-    -   look at the actual numbers

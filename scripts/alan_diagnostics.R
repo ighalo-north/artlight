@@ -11,49 +11,24 @@ library(performance)
 library(glmmTMB)
 library(effects)
 library(DHARMa)
+library(qqplotr)
 
 options(contrasts=c("contr.sum", "contr.poly"))
 
-#working directory MUST be project location - there's a way to automate this but later
 alan <- readRDS("data/clean_alan_gen25.rds")
 
+#population level model----
+pop_tmb <- glmmTMB(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1|Generation:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = alan, family = Gamma(link="log"), se = TRUE)
 
-#april 15 onwards----
-
-#singular
-prez1 <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1+Generation:Treatment|Lineage) + (1|Maze), data = alan, family=Gamma(link="log"))
-
-#failed convergence
-prez2 <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1|Generation:Treatment:Lineage) + (1|Maze), data = alan, family=Gamma(link="log"))
-#so try allFit
-diff_optims <- allFit(prez2, maxfun=4e5)
-#maxfun option sets the maximum number of iterations - 
-#more can increase the likelihood of convergence, though I have had R freeze up sometimes if the value is too high
-'
-https://joshua-nugent.github.io/allFit/
-Do not be fooled! These are not “OK” fits! \
-We need to check for convergence flags. 
-Below, we’re looking for the result NULL - 
-meaning we have no convergence warnings in the fitted 
-model with that optimizer.
-'
-diff_optims_OK <- diff_optims[sapply(diff_optims, is, "merMod")]
-lapply(diff_optims_OK, function(x) x@optinfo$conv$lme4$messages)
-#component 1 means maxfun limit was reached
-
-
-
-tmbmodel <- glmmTMB(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1|Generation:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = alan, family = Gamma(link="log"), se = TRUE)
-
-plotResiduals(tmbmodel)
+plotResiduals(pop_tmb)
 
 focal.predictors = c("Sex", "Treatment", "Generation", "time_of_day")
-Anova(tmbmodel, type = c("3"), test.statistic = c("Chisq"))
-Effect(focal.predictors, tmbmodel)
+Anova(pop_tmb, type = c("3"), test.statistic = c("Chisq"))
+Effect(focal.predictors, pop_tmb)
 
-#inferential plots for tmbmodel
+#inferential plots for pop_tmb
 #all fixed effects
-alan_estimates <- emmeans(tmbmodel, ~ Sex + Treatment + Generation + time_of_day, type = "response") 
+alan_estimates <- emmeans(pop_tmb, ~ Sex + Treatment + Generation + time_of_day, type = "response") 
 alan_estimates
 plot(alan_estimates) + xlab("Estimated Lightscore")
 
@@ -62,7 +37,7 @@ emmip(alan_estimates, Sex ~ Treatment, CIs = TRUE) +
   xlab("Treatment") +
   theme_bw()
 #sex
-alan_estimates <- emmeans(tmbmodel, ~ Sex, type = "response") 
+alan_estimates <- emmeans(pop_tmb, ~ Sex, type = "response") 
 alan_estimates
 plot(alan_estimates) + xlab("Estimated Lightscore")
 
@@ -71,7 +46,7 @@ emmip(alan_estimates, ~ Sex, CIs = TRUE) +
   xlab("Sex") +
   theme_bw()
 #treatment
-alan_estimates <- emmeans(tmbmodel, ~ Treatment, type = "response") 
+alan_estimates <- emmeans(pop_tmb, ~ Treatment, type = "response") 
 alan_estimates
 plot(alan_estimates) + xlab("Estimated Lightscore")
 
@@ -80,7 +55,7 @@ emmip(alan_estimates, ~ Treatment, CIs = TRUE) +
   xlab("Treatment") +
   theme_bw()
 #time of day
-alan_estimates <- emmeans(tmbmodel, ~ time_of_day, type = "response") 
+alan_estimates <- emmeans(pop_tmb, ~ time_of_day, type = "response") 
 alan_estimates
 plot(alan_estimates) + xlab("Estimated Lightscore")
 
@@ -90,45 +65,21 @@ emmip(alan_estimates, ~time_of_day, CIs = TRUE) +
   theme_bw()
 
 
-#Anova does not like Generation as a factor w 25 levels (understandable tbh)
-'tmbgenfactor <- glmmTMB(Lightscore ~ Generation_factor*Sex*Treatment + time_of_day + (1|Generation_factor:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = alan, family = Gamma(link="log"), se = TRUE)
-focal.predictors = c("Sex", "Treatment", "Generation_factor", "time_of_day")
-Anova(tmbgenfactor, type = c("3"), test.statistic = c("Chisq"))
-Effect(focal.predictors, tmbgenfactor)'
-
-#prefers split into early, middle, late
+#population model with generation collapsed----
 tmbgensplit <- glmmTMB(Lightscore ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = alan, family = Gamma(link="log"), se = TRUE)
 plotResiduals(tmbgensplit)
 focal.predictors = c("Sex", "Treatment", "Generation_split", "time_of_day")
 Anova(tmbgensplit, type = c("3"), test.statistic = c("Chisq"))
 Effect(focal.predictors, tmbgensplit)
 
-#generation
-alan_estimates <- emmeans(tmbgensplit, ~ Generation_split, type = "response") 
-alan_estimates
-plot(alan_estimates) + xlab("Estimated Lightscore")
-
-emmip(alan_estimates, ~Generation_split, CIs = TRUE) +
-  ylab("Estimated Lightscore") +
-  xlab("Generation") +
-  theme_bw()
-
 alan_estimates <- emmeans(tmbgensplit, ~ Generation_split*Treatment, type = "response") 
 alan_estimates
 plot(alan_estimates) + xlab("Estimated Lightscore")
-
 emmip(alan_estimates, ~ Generation_split*Treatment, CIs = TRUE) +
   ylab("Estimated Lightscore") +
   xlab("Generation") +
   theme_bw()
-alan_estimates <- emmeans(tmbgensplit, ~ Generation_split*Treatment*Sex, type = "response") 
-alan_estimates
-plot(alan_estimates) + xlab("Estimated Lightscore")
-emmip(alan_estimates, ~ Generation_split*Treatment*Sex, CIs = TRUE, col = rep(c("red", "blue"), length.out = 20)) +
-  ylab("Estimated Lightscore") +
-  xlab("Generation") +
-  scale_colour_manual(values = c("red", "blue")) +
-  theme_bw()
+
 alan_estimates <- emmeans(tmbgensplit, ~ Generation_split*Treatment*Sex*time_of_day, type = "response") 
 alan_estimates
 plot(alan_estimates) + xlab("Estimated Lightscore")
@@ -137,26 +88,16 @@ emmip(alan_estimates, ~ Generation_split|Treatment*Sex*time_of_day, CIs = TRUE, 
   xlab("Generation") +
   theme_bw()
 
-'Generation$split
-
-Q1 1, 2, 3, 4, 5 - 2 measurements of C
-Q2 6, 7, 8, 9, 10 - 1 meas of C
-Q3 11, 12, 13, 14, 15 - 1 meas of C
-Q4 16, 17, 18, 19, 20 - 1 meas of C
-Q5 21, 22, 23, 24, 25 - 1 meas of C
-
-early 1, 2, 3, 4, 5, 6, 7, 8, 9
-middle 10, 11, 12, 13, 14, 15, 16
-late 17, 18, 19, 20, 21, 22, 23, 24, 25'
+alan_estimates <- emmeans(tmbgensplit, ~ Sex, type = "response") 
+alan_estimates
+plot(alan_estimates) + xlab("Estimated Lightscore")
+emmip(alan_estimates, ~ Sex ~ Treatment, CIs = TRUE, as.table = FALSE) +
+  ylab("Estimated Lightscore") +
+  xlab("Generation") +
+  theme_bw()
 
 
-#trial id
-#wide to long
-#one row per fly
-#for each vial, create number of rows based on count in cell
-  #terminal vial ID
-
-#this dataframe is 1 row per terminal vial
+#one vial per row----
 indialan <- alan |>
   mutate(trial_id = row_number()) |>
   pivot_longer(
@@ -173,24 +114,36 @@ indialanuncount <- indialan |>
   mutate(count = replace_na(count, 0)) |>
   uncount(count)
 
-#model at individual fly----
-'flyglmer <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1|Generation:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"))
-CAUTION: above model will take forever to converge so Im still not sure if it works or not
-'
+#individual fly level model----
+'Generation$split
 
-#RD: trial within each lineage and generation will have to be a random effect as well
-#flytmb <- glmmTMB(vial_id ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|rep_trial_id)+ (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"), se = TRUE)
-flytmb <- glmmTMB(vial_id ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage:rep_trial_id) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"), se = TRUE)
+Q1 1, 2, 3, 4, 5 - 2 measurements of C
+Q2 6, 7, 8, 9, 10 - 1 meas of C
+Q3 11, 12, 13, 14, 15 - 1 meas of C
+Q4 16, 17, 18, 19, 20 - 1 meas of C
+Q5 21, 22, 23, 24, 25 - 1 meas of C'
 
-#flytmb <- glmmTMB(Lightscore ~ Generation_split*Sex*Treatment + time_of_day/trial_id + (1|Generation_split:Treatment:Lineage:) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"), se = TRUE)
+#flytmb <- glmmTMB::glmmTMB(vial_id ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"), se = TRUE)
 
-#rep_trial_id 1234 by lineage
-#trial_id unique to every single maze
-#ask ben
+#binomial distribution (ystar, 16-ystar)
+indialanuncount$vial_idstar <- indialanuncount$vial_id - 1
 
+
+flytmb <- glmmTMB::glmmTMB(cbind(vial_id, 16-vial_idstar) ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = binomial(link="logit"), se = TRUE)
+
+
+check_model(flytmb, size_dot = 1.2)
 plot(simulateResiduals(flytmb), rank = T) #yikes + oh no
 
-allFit(flytmb)
+check_predictions(flytmb, size_dot = 1.2)
+check_heteroskedasticity(flytmb, size_dot = 1.2)
+plot(check_residuals(flytmb, size_dot = 1.2))
+simulateResiduals(flytmb)
+check_collinearity(flytmb, size_dot = 1.2)
+check_outliers(flytmb, size_dot = 1.2)
+binned_residuals(flytmb, size_dot = 1.2)
+check_overdispersion(flytmb, size_dot = 1.2)
+
 focal.predictors = c("Sex", "Treatment", "Generation_split", "time_of_day")
 Anova(flytmb, type = c("3"), test.statistic = c("Chisq"))
 Effect(focal.predictors, flytmb)
@@ -237,175 +190,4 @@ emmip(alan_estimates, ~ Generation_split | Treatment, CIs = TRUE) +
 
 
 
-#pre april 15-----
-#small model----
-linalan_null <- lm(Lightscore ~ 1, data = alan) #null hypothesis
-linalanbasic <- lm(Lightscore~TrtLin + Generation, data=alan)
-
-#draw diagnostic for simple linear models
-performance::check_model(linalanbasic)
-performance::check_model(linalan_null)
-
-#compare the two simple linear models
-anova(linalanbasic, linalan_null)
-
-
-#BIG MODEL (includes hypothesis about Females vs Males----
-#make linear model for hypothesis----
-#add vars one by one
-linalan <- lm(Lightscore~TrtLin + Generation, data = alan)
-
-linalan <- update(linalan, . ~ . +Sex)
-
-linalan <- update(linalan, . ~ . +day)
-
-linalan <- update(linalan, . ~ . +time_of_day)
-
-linalan <- update(linalan, .~. +Maze)
-
-linalan <- update(linalan, . ~ . +Maze_Order)
-
-linalan <- update(linalan, .~. +blind)
-
-linalan <- update(linalan, .~. + Light_Side)
-
-linalan <- update(linalan, .~. + flies_in)
-#compare the fit of each model to my data
-drop1(linalan, test="F")
-#draw diagnostic for linear model
-performance::check_model(linalan)
-
-alan <- alan |> 
-  mutate(Generation_factor = as.factor(Generation))
-#vs a linear mixed model (the proper way to analyze this data)----
-lmeralan <- lmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (Generation|day) + (1|maze_position) + (Treatment|Lineage) + (1|Maze),
-                 data = alan)
-drop1(lmeralan, test="Chisq") #test=Chisq? or none? --> same output actually so nvm
-  #test=user is pointless atp
-
-#okay so what if we use a gamma distribution with glmm----
-gg0 <- ggplot(alan,aes(Generation_factor,Lightscore))+geom_point()
-
-gg1 <- gg0 + geom_smooth(method="glm",colour="red",
-                         formula=y~x,
-                         method.args=list(family=Gamma(link="log")))
-gg1 <- glm(Lightscore ~ Generation_factor*Sex*Treatment + time_of_day + (Generation_factor|day) + (1|maze_position) + (Treatment|Lineage) + (1|Maze), data = alan, family=quasipoisson(link="log"))
-summary(gg1)
-
-mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation_factor/day) + (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze) + (1|Maze/Light_Side), data = alan, family=Gamma(link="inverse"))
-
-
-#failed to converge; from BB on stackoverflow
-  #the basic problem is that you have multiple 
-  #observations in your data set of x per m, but they all have the same response value, so your x 
-  #random effect is confounded with everything else
-
-#removed 1|maze/light_side
-oldmodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + 
-                    (1 | Generation_factor/day) + (1|maze_position) + 
-                    (1 | Treatment:Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"))
-
-
-mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1 | Generation) + 
-                   (1|maze_position) + (1 | Treatment/Lineage) + (1|Maze), 
-                 data = alan, family=Gamma(link="inverse"))
-mod_matrix <- model.matrix(mymodel)
-colnames(mod_matrix)
-
-
-#the intercept and generation varying by lineage nested within treatment;
-mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + 
-                   (1 + Generation| Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"))
-
-mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + 
-                   (1 + Generation| Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"))
-
-mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + (1|Maze), data = alan, family=Gamma(link="inverse"))
-
-mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + 
-                   (1 + Generation:Treatment/Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"))
-
-help('isSingular')
-mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + Light_Side + (1 | Generation/day) + (1|maze_position) + (1 | Treatment/Lineage), data = alan, family=Gamma(link="log"))
-
-
-#trying things
-mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + 
-                   (1 + Generation|Treatment:Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"), 
-                    control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
-
-mymodel <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day +
-                   (1 | Treatment:Lineage), data = alan, family=Gamma(link="inverse"))
-
-summary(oldmodel)
-simulateResiduals(oldmodel)
-
-model1 <- glmer(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1|maze_position) + (1 | Generation:Treatment:Lineage) + (1|Maze), data = alan, family=Gamma(link="inverse"))
-
-summary(alan)
-#draw diagnostics for linear mixed model
-testDispersion(mymodel)
-plot(simulateResiduals(fittedModel = mymodel, plot = F))
-performance::check_model(oldmodel)
-
-
-plot(gg1) #diagnostics 1 by 1
-performance::check_model(gg1)
-
-
-
-#trying to fix ks test results
-simulationOutput <- simulateResiduals(lmeralan)
-plot(simulationOutput)
-for (var in c("Sex", "Generation", "Treatment", "time_of_day", "day", "maze_position", "Lineage", "Maze")){
-  plotResiduals(simulationOutput, form = alan[[var]])
-  
-} #yikes
-
-testDispersion(lmeralan)
-
-
-#high collinearity between TrtLin and day, so we removed TrtLin from the model
-linalan <- update(linalan,~. -TrtLin)
-performance::check_model(linalan)
-
-anova(linalanbasic, linalan_null, linalan)
-anova(lmeralan)
-
-
-#plot distributions across vials by lineage----
-#data are in wide format, shift to long
-long_count <- pivot_longer(
-  alan,
-  cols = `1`:`16`,
-  names_to = "vial",
-  values_to = "flies"
-)
-
-long_count$vial <- as.numeric(long_count$vial)
-#this type of thing, one row per observation,
-  #might be better for analysis? like if we want to switch
-  #lightscore to a cat var with 5 vials per group to break up the vial choices
-
-
-plotgendist <- function(generation_num){
-  templongdf_subsetfungen <- filter(long_count, Generation == generation_num)
-  
-  temp_plot <- ggplot(templongdf_subsetfungen, aes(x=vial, y=flies, colour = TrtLin, group = TrtLin))+
-    geom_line(alpha = 0.4) +   #faint lines for replicates
-    stat_summary(fun = mean, geom = "line", aes(group = TrtLin, colour = TrtLin), size = 1.2) + #mean line
-    scale_x_continuous(limits = c(1, 16), breaks = 1:16)+
-    scale_y_continuous(limits = c(0, 60))+
-    labs(x = "Vial", y = "Fly Count", title = paste0("Fly Distribution by Lineage, Gen ", generation_num)) +
-    theme_minimal()
-  
-  rm(templongdf_subsetfungen)
-  print(temp_plot)
-  print("done")
-}
-
-#plot graphs for each generation, truly just for fun
-for (i in 1:25){
-  plotgendist(i)
-}
 

@@ -21,6 +21,8 @@ alan <- readRDS("data/clean_alan_gen25.rds")
 pop_tmb <- glmmTMB(Lightscore ~ Generation*Sex*Treatment + time_of_day + (1|Generation:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = alan, family = Gamma(link="log"), se = TRUE)
 
 plotResiduals(pop_tmb)
+check_model(pop_tmb)
+summary(pop_tmb)
 
 focal.predictors = c("Sex", "Treatment", "Generation", "time_of_day")
 Anova(pop_tmb, type = c("3"), test.statistic = c("Chisq"))
@@ -115,6 +117,8 @@ indialanuncount <- indialan |>
   uncount(count)
 
 #individual fly level model----
+#####FUTURE DIRECTIONS
+
 'Generation$split
 
 Q1 1, 2, 3, 4, 5 - 2 measurements of C
@@ -123,7 +127,7 @@ Q3 11, 12, 13, 14, 15 - 1 meas of C
 Q4 16, 17, 18, 19, 20 - 1 meas of C
 Q5 21, 22, 23, 24, 25 - 1 meas of C'
 
-#flytmb <- glmmTMB::glmmTMB(vial_id ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"), se = TRUE)
+flytmb <- glmmTMB::glmmTMB(vial_id ~ Generation_split*Sex*Treatment + time_of_day + (1|Generation_split:Treatment:Lineage) + (1|Maze) + (1|maze_position), data = indialanuncount, family = Gamma(link="log"), se = TRUE)
 
 #binomial distribution (ystar, 16-ystar)
 indialanuncount$vial_idstar <- indialanuncount$vial_id - 1
